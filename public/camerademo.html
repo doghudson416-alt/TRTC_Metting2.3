@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo · สแกนบัตร OCR</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg:       #e8e9eb;
+    --panel:    #f2f3f4;
+    --border:   #c4c7cc;
+    --accent:   #3a3f4a;
+    --green:    #2e7d4f;
+    --red:      #c0392b;
+    --text:     #1a1d22;
+    --text-dim: #6b7280;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Kanit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+/* ── HEADER ── */
+.header {
+    width: 100%; max-width: 720px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+}
+.brand-name { font-size: 16px; font-weight: 800; letter-spacing: 3px; color: var(--accent); }
+.brand-sub  { font-size: 10px; font-weight: 300; color: var(--text-dim); letter-spacing: 2px; }
+.demo-badge {
+    background: var(--accent); color: #fff;
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; letter-spacing: 2px;
+}
+
+/* ── OCR CARD ── */
+.ocr-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 22px;
+    width: 100%; max-width: 720px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+.ocr-title { font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+.ocr-sub   { font-size: 12px; color: var(--text-dim); margin-bottom: 12px; }
+
+/* ── LAYOUT ── */
+.ocr-body  { display: flex; gap: 16px; align-items: flex-start; }
+.ocr-left  { flex: 1; min-width: 0; }
+.ocr-right { width: 190px; flex-shrink: 0; display: none; }
+.ocr-right.show { display: block; }
+
+/* ── PREVIEW ── */
+.ocr-preview {
+    width: 100%; 
+    max-width: 500px;
+    max-height: 280px;
+    aspect-ratio: 16/9;
+    margin: 0 auto;
+    background: #111; border-radius: 10px;
+    overflow: hidden; position: relative;
+    display: flex; align-items: center; justify-content: center;
+}
+.ocr-preview video,
+.ocr-preview canvas {
+    width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0;
+}
+.ocr-preview canvas { display: none; }
+.ocr-guide {
+    position: absolute; inset: 8%;
+    border: 2px dashed rgba(255,255,255,0.4);
+    border-radius: 8px; pointer-events: none;
+}
+.ocr-guide-text {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.8);
+    padding: 3px 10px; border-radius: 20px; font-size: 10px; white-space: nowrap;
+}
+
+/* ── RESULT PANEL (ขวา) ── */
+.ocr-result {
+    background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 10px; padding: 12px 14px;
+}
+.ocr-result-title {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+    color: var(--text-dim); margin-bottom: 10px;
+}
+.ocr-result-row   { display: flex; flex-direction: column; margin-bottom: 8px; }
+.ocr-result-label { font-size: 10px; color: var(--text-dim); margin-bottom: 1px; }
+.ocr-result-val   { font-size: 12px; font-weight: 700; color: var(--text); word-break: break-all; }
+
+/* ── BUTTONS ── */
+.ocr-actions-initial { display: flex; gap: 8px; margin-top: 10px; }
+.ocr-actions-after   { display: none; flex-direction: column; gap: 8px; margin-top: 10px; }
+.ocr-actions-after.show { display: flex; }
+.ocr-actions-after-row { display: flex; gap: 8px; }
+
+.btn-capture {
+    flex: 1; padding: 10px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 8px;
+    font-family: 'Kanit', sans-serif; font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+}
+.btn-capture:hover { filter: brightness(1.15); }
+
+.btn-retake {
+    flex: 1; padding: 10px;
+    background: transparent; color: var(--accent);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-family: 'Kanit', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+}
+.btn-retake:hover { background: var(--border); }
+
+.btn-done {
+    flex: 1; padding: 10px;
+    background: var(--green); color: #fff;
+    border: none; border-radius: 8px;
+    font-family: 'Kanit', sans-serif; font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+}
+.btn-done:hover { filter: brightness(1.1); }
+
+/* ── TOAST ── */
+.toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: #fff;
+    border-radius: 10px; padding: 12px 28px;
+    font-size: 14px; font-weight: 600;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <div class="brand-name">VILLAGE GUARD</div>
+        <div class="brand-sub">ระบบ OCR สแกนบัตร</div>
+    </div>
+    <div class="demo-badge">DEMO MODE</div>
+</div>
+
+<div class="ocr-card">
+    <div class="ocr-title">🪪 สแกนบัตร</div>
+    <div class="ocr-sub" id="ocrSub">จัดบัตรให้อยู่ในกรอบ แล้วกดถ่ายภาพ</div>
+
+    <div class="ocr-body">
+        <div class="ocr-left">
+            <div class="ocr-preview">
+                <video id="ocrVideo" autoplay playsinline muted></video>
+                <canvas id="ocrCanvas"></canvas>
+                <div class="ocr-guide">
+                    <div class="ocr-guide-text">จัดบัตรให้อยู่ในกรอบ</div>
+                </div>
+            </div>
+
+            <div class="ocr-actions-initial" id="actionsInitial">
+                <button class="btn-capture" id="btnCapture" onclick="capture()">ถ่ายภาพ</button>
+            </div>
+
+            <div class="ocr-actions-after" id="actionsAfter">
+                <div class="ocr-actions-after-row">
+                    <button class="btn-done" onclick="done()">เสร็จสิ้น</button>
+                    <button class="btn-retake" onclick="retake()">ถ่ายใหม่</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="ocr-right" id="ocrRight">
+            <div class="ocr-result">
+                <div class="ocr-result-title">🪪 ข้อมูลบัตร</div>
+                <div class="ocr-result-row">
+                    <span class="ocr-result-label">ประเภทบัตร</span>
+                    <span class="ocr-result-val" id="rCardType">—</span>
+                </div>
+                <div class="ocr-result-row">
+                    <span class="ocr-result-label">ชื่อ (ไทย)</span>
+                    <span class="ocr-result-val" id="rNameTh">—</span>
+                </div>
+                <div class="ocr-result-row">
+                    <span class="ocr-result-label">ชื่อ (Eng)</span>
+                    <span class="ocr-result-val" id="rNameEn">—</span>
+                </div>
+                <div class="ocr-result-row">
+                    <span class="ocr-result-label">เลขบัตร</span>
+                    <span class="ocr-result-val" id="rIdNumber">—</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let ocrStream = null;
+
+// เปิดกล้องทันทีที่โหลดหน้า
+window.addEventListener('DOMContentLoaded', async () => {
+    try {
+        ocrStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: 1280, height: 720 },
+            audio: false
+        });
+        document.getElementById('ocrVideo').srcObject = ocrStream;
+    } catch(e) {
+        document.getElementById('ocrSub').textContent = '❌ ไม่สามารถเปิดกล้องได้ กรุณาอนุญาต Camera';
+        document.getElementById('btnCapture').disabled = true;
+    }
+});
+
+// ถ่ายภาพและส่ง OCR
+async function capture() {
+    const video  = document.getElementById('ocrVideo');
+    const canvas = document.getElementById('ocrCanvas');
+    const btn    = document.getElementById('btnCapture');
+
+    canvas.width  = video.videoWidth  || 1280;
+    canvas.height = video.videoHeight || 720;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    canvas.style.display = 'block';
+    video.style.display  = 'none';
+
+    btn.disabled        = true;
+    btn.textContent     = 'กำลังประมวลผล...';
+    document.getElementById('ocrSub').textContent = 'กำลังอ่านข้อมูลจากบัตร...';
+
+    canvas.toBlob(async (blob) => {
+        try {
+            const form = new FormData();
+            form.append('photo', blob, 'id-card.jpg');
+            const res    = await fetch('/api/ocr', { method: 'POST', body: form });
+            const result = await res.json();
+
+            if (result.status === 'success' && result.data) {
+                const d = result.data;
+                document.getElementById('rCardType').textContent  = d.cardType  || 'ไม่ระบุ';
+                document.getElementById('rNameTh').textContent    = d.nameTh    || '—';
+                document.getElementById('rNameEn').textContent    = d.nameEn    || '—';
+                document.getElementById('rIdNumber').textContent  = d.idNumber  || '—';
+
+                document.getElementById('ocrRight').classList.add('show');
+                document.getElementById('actionsInitial').style.display = 'none';
+                document.getElementById('actionsAfter').classList.add('show');
+                document.getElementById('ocrSub').textContent = 'อ่านบัตรสำเร็จ';
+            } else {
+                document.getElementById('ocrSub').textContent = '⚠️ อ่านบัตรไม่ได้ ลองถ่ายใหม่';
+                btn.disabled    = false;
+                btn.textContent = 'ถ่ายภาพ';
+                canvas.style.display = 'none';
+                video.style.display  = 'block';
+            }
+        } catch(e) {
+            document.getElementById('ocrSub').textContent = '❌ เกิดข้อผิดพลาด ลองใหม่';
+            btn.disabled    = false;
+            btn.textContent = 'ถ่ายภาพ';
+            canvas.style.display = 'none';
+            video.style.display  = 'block';
+        }
+    }, 'image/jpeg', 0.92);
+}
+
+// ถ่ายใหม่
+function retake() {
+    const video  = document.getElementById('ocrVideo');
+    const canvas = document.getElementById('ocrCanvas');
+    canvas.style.display = 'none';
+    video.style.display  = 'block';
+    document.getElementById('ocrRight').classList.remove('show');
+    document.getElementById('actionsInitial').style.display = 'flex';
+    document.getElementById('actionsAfter').classList.remove('show');
+    document.getElementById('btnCapture').disabled    = false;
+    document.getElementById('btnCapture').textContent = 'ถ่ายภาพ';
+    document.getElementById('ocrSub').textContent = 'จัดบัตรให้อยู่ในกรอบ แล้วกดถ่ายภาพ';
+}
+
+// เสร็จ demo
+function done() {
+    showToast('Demo เสร็จสิ้น ระบบ OCR ทำงานสำเร็จ');
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

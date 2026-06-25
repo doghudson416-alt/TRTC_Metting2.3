@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการบ้านเลขที่</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Kanit', sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    min-height: 100vh;
+    padding: 32px 20px;
+}
+.container { max-width: 700px; margin: 0 auto; }
+
+h1 {
+    font-size: 22px; font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+}
+.sub { font-size: 13px; color: #64748b; margin-bottom: 28px; }
+
+.card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    padding: 24px;
+    margin-bottom: 20px;
+}
+.card-title {
+    font-size: 14px; font-weight: 600;
+    color: #64748b;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+}
+
+.house-row {
+    display: flex; align-items: center;
+    gap: 12px; padding: 14px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+.house-row:last-child { border-bottom: none; }
+
+.house-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 22px; font-weight: 700;
+    color: #2563eb;
+    width: 56px; flex-shrink: 0;
+}
+.house-name { flex: 1; font-size: 15px; color: #334155; }
+
+.btn-gen {
+    padding: 9px 18px;
+    background: #2563eb;
+    color: #fff;
+    border: none; border-radius: 8px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+.btn-gen:hover { background: #1d4ed8; }
+.btn-gen:disabled { background: #94a3b8; cursor: not-allowed; }
+
+
+.warn {
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #92400e;
+    line-height: 1.6;
+}
+
+.status-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 8px; flex-wrap: wrap;
+}
+.badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+}
+.badge-line { background: #dcfce7; color: #16a34a; }
+.badge-noline { background: #f1f5f9; color: #94a3b8; }
+.badge-fcm { background: #eff6ff; color: #2563eb; }
+
+.btn-reset {
+    padding: 6px 14px;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 6px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; color: #e11d48;
+    transition: all 0.2s;
+}
+.btn-reset:hover { background: #fecdd3; }
+.btn-reset:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.section-title {
+    font-size: 18px; font-weight: 700;
+    color: #0f172a; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+}
+.add-house-form {
+    display: flex; gap: 10px; margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.input-field {
+    flex: 1; min-width: 120px;
+    padding: 10px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 14px; color: #1e293b;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.input-field:focus { border-color: #2563eb; }
+.btn-add {
+    padding: 10px 20px;
+    background: #16a34a;
+    color: #fff; border: none;
+    border-radius: 8px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+    transition: background 0.2s;
+}
+.btn-add:hover { background: #15803d; }
+.btn-add:disabled { background: #94a3b8; cursor: not-allowed; }
+.btn-delete {
+    padding: 6px 14px;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 6px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; color: #e11d48;
+    transition: all 0.2s; white-space: nowrap;
+}
+.btn-delete:hover { background: #fecdd3; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Admin Village Guard</h1>
+    <div class="sub">จัดการบ้านเลขที่ และ LINE User ID ของลูกบ้าน</div>
+
+    <!-- ── CRUD บ้าน ── -->
+    <div class="section-title">จัดการบ้านเลขที่</div> 
+    <div class="card">
+        <div class="card-title">เพิ่มบ้านใหม่</div>
+        <div class="add-house-form">
+            <input class="input-field" id="inputHouseNumber" placeholder="เลขที่บ้าน เช่น 104" maxlength="10">
+            <input class="input-field" id="inputHouseName" placeholder="ชื่อบ้าน (ไม่ระบุก็ได้)">
+            <button class="btn-add" onclick="addHouse()">+ เพิ่มบ้าน</button>
+        </div>
+        <div class="card-title" style="margin-top:4px;">รายการบ้านทั้งหมด</div>
+        <div id="houseListCrud">
+            <div style="text-align:center;padding:20px;color:#94a3b8">กำลังโหลด...</div>
+        </div>
+    </div>
+
+    <!-- ── LINE Status ── -->
+    <div class="section-title" style="margin-top:8px;">จัดการ LINE User ID</div>
+    <div class="warn">
+        ⚠️ เมื่อกด "Reset LINE" ระบบจะลบ LINE User ID ของบ้านนั้นออกทันที เจ้าของบ้านต้องแอด LINE OA และพิมพ์เลขบ้านใหม่เพื่อเชื่อมต่ออีกครั้ง
+    </div>
+    <br>
+    <div class="card">
+        <div class="card-title">สถานะ LINE ของแต่ละบ้าน</div>
+        <div id="houseList">
+            <div style="text-align:center;padding:20px;color:#94a3b8">กำลังโหลด...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+
+// CRUD บ้าน
+// ==========================================
+// โหลดข้อมูลบ้านทั้งหมดจาก API
+async function loadHouseCrud() {
+    try {
+        const res = await fetch('/api/houses'); // เรียกขอข้อมูลรายชื่อบ้าน ที่(Endpoint) ที่ชื่อ /api/houses
+        const result = await res.json(); //แปรผลลัพธ์ที่ได้จาก API ให้อยู่ในรูปแบบ JSON (JavaScript Object Notation) ซึ่งเป็นรูปแบบข้อมูลที่นิยมใช้ในการแลกเปลี่ยนข้อมูลระหว่าง client และ server
+        if (result.status !== 'success') return; //ตรวจสอบว่า API ตอบกลับมาว่าสำเร็จไหม? ถ้าไม่ใช่ 'success' ก็ไม่ต้องทำอะไรต่อ
+        renderHouseCrud(result.data); //ถ้าสำเร็จ ก็ส่งข้อมูลบ้านทั้งหมด (result.data) ไปให้ฟังก์ชัน renderHouseCrud เพื่อแปรรูปและแสดงผลบนหน้าเว็บ
+    } catch(e) { //ถ้าเกิดข้อผิดพลาดในการเชื่อมต่อหรือประมวลผลข้อมูลจาก API จะแสดงข้อความแจ้งว่าโหลดข้อมูลไม่ได้
+        document.getElementById('houseListCrud').innerHTML = // เข้าถึงองค์ประกอบบนหน้าเว็บที่มี id เป็น 'houseListCrud' และเปลี่ยนเนื้อหาภายในของมันให้เป็นข้อความแจ้งว่าโหลดข้อมูลไม่ได้
+            '<div style="color:#e11d48;padding:16px">โหลดข้อมูลไม่ได้</div>'; //ข้อความนี้จะปรากฏในกรณีที่ไม่สามารถเชื่อมต่อกับ server หรือเกิดข้อผิดพลาดอื่นๆ ในการดึงข้อมูลบ้านมาแสดงผลบนหน้าเว็บ
+    }
+}
+
+//document.getElementById() คือคำสั่งภาษา JavaScript ที่ทำหน้าที่เป็นตัวค้นหาเป้าหมาย 
+
+// แปรรูปและแสดงผลข้อมูลบ้านบนหน้าเว็บ
+function renderHouseCrud(houses) {  //
+    const el = document.getElementById('houseListCrud'); // เข้าถึงองค์ประกอบบนหน้าเว็บที่มี id เป็น 'houseListCrud' และเก็บไว้ในตัวแปร el เพื่อใช้ในการแสดงผลข้อมูลบ้าน
+    //ตรวจสอบว่ามีข้อมูลบ้านไหม?
+    if (houses.length === 0) { 
+        el.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8">ยังไม่มีบ้านในระบบ</div>'; 
+        return; 
+    }
+    //ถ้ามีบ้าน ให้แสดงเป็นแถวๆ พร้อมปุ่มลบ 
+    //.map(h => ... ): เป็นการสั่งหยิบบ้านทีละหลังมาแปรรูปเป็น HTML 1 แถว
+    //<button class="btn-delete">): เป็นการสร้างปุ่มลบสำหรับแต่ละบ้าน โดยมีคำสั่ง onclick ที่จะเรียกใช้ฟังก์ชัน deleteHouse พร้อมส่งเลขที่บ้านและปุ่มนั้นไปด้วย
+    //.innerHTML คือ คุณสมบัติ (Property) ที่เข้าถึง "เนื้อหา HTML ด้านใน" ของกล่องนั้น
+    el.innerHTML  = houses.map(h => ` 
+        <div class="house-row"> 
+            <div class="house-num">${h.house_number}</div>  //
+            <div class="house-name">${h.house_name}</div> 
+            <button class="btn-delete" onclick="deleteHouse('${h.house_number}', this)">ลบ</button> 
+        </div>
+    `).join('');
+    //.map จะได้ผลลัพธ์ออกมาเป็นกลุ่มก้อนข้อมูลแยกชิ้นกัน .join('') จะเอากลุ่มก้อนข้อมูลที่แยกชิ้นกันนั้นมารวมเป็นก้อนเดียวกัน และใช้ '' เป็นตัวคั่นระหว่างชิ้นข้อมูลแต่ละชิ้น (ในที่นี้คือไม่มีตัวคั่น) เพื่อให้ได้ HTML ที่สมบูรณ์สำหรับแสดงบนหน้าเว็บ
+}
+
+// เพิ่มบ้านใหม่
+async function addHouse() { 
+    const houseNumber = document.getElementById('inputHouseNumber').value.trim(); // ดึงค่าที่ผู้ใช้กรอกในช่อง "เลขที่บ้าน" โดยเข้าถึงองค์ประกอบที่มี id เป็น 'inputHouseNumber' และใช้ .value เพื่อดึงค่าที่กรอกมา จากนั้นใช้ .trim() เพื่อตัดช่องว่างที่อาจจะมีอยู่ข้างหน้าและข้างหลังออก
+    const houseName   = document.getElementById('inputHouseName').value.trim(); // ดึงค่าที่ผู้ใช้กรอกในช่อง "ชื่อบ้าน" โดยเข้าถึงองค์ประกอบที่มี id เป็น 'inputHouseName' และใช้ .value เพื่อดึงค่าที่กรอกมา จากนั้นใช้ .trim() เพื่อตัดช่องว่างที่อาจจะมีอยู่ข้างหน้าและข้างหลังออก
+    if (!houseNumber) { showToast('⚠️ กรุณากรอกเลขที่บ้าน'); return; } // ตรวจสอบว่าผู้ใช้กรอกเลขที่บ้านมาหรือยัง ถ้า houseNumber เป็นค่าว่าง จะแสดงข้อความแจ้งเตือนให้กรอกเลขที่บ้านก่อน และหยุดการทำงานของฟังก์ชันนี้ด้วย return
+
+    const btn = document.querySelector('.btn-add'); // เข้าถึงปุ่มเพิ่มบ้านที่มีคลาสเป็น 'btn-add' และเก็บไว้ในตัวแปร btn เพื่อใช้ในการเปลี่ยนสถานะของปุ่มในระหว่างการทำงานของฟังก์ชันนี้
+    btn.disabled = true; btn.textContent = 'กำลังเพิ่ม...'; // ปิดการใช้งานปุ่มเพิ่มบ้านเพื่อป้องกันการคลิกซ้ำ และเปลี่ยนข้อความบนปุ่มเป็น 'กำลังเพิ่ม...' เพื่อแจ้งให้ผู้ใช้ทราบว่ากำลังดำเนินการเพิ่มบ้านอยู่
+
+    //ส่งคำขอเพิ่มบ้านใหม่ไปยัง API โดยใช้ fetch ซึ่งเป็นฟังก์ชันที่ใช้ในการทำคำขอ HTTP ใน JavaScript  
+    try {
+        const res = await fetch('/api/admin/houses', { // เรียกใช้ API ที่ Endpoint /api/admin/houses เพื่อเพิ่มบ้านใหม่
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, // กำหนดให้ข้อมูลที่ส่งไปยัง API เป็นรูปแบบ JSON โดยการตั้งค่า Content-Type ใน headers เป็น 'application/json'
+            body: JSON.stringify({ houseNumber, houseName }) // สร้างข้อมูลที่ต้องการส่งไปยัง API โดยใช้ JSON.stringify เพื่อแปลงข้อมูลเป็นรูปแบบ JSON ซึ่งประกอบด้วยเลขที่บ้านและชื่อบ้านที่ผู้ใช้กรอกมา
+        });
+        // รอรับผลลัพธ์จาก API และแปรผลลัพธ์นั้นให้อยู่ในรูปแบบ JSON เพื่อให้สามารถตรวจสอบสถานะการเพิ่มบ้านได้
+        const result = await res.json(); // เมื่อเรียกใช้ API ผ่านคำสั่ง fetch() ผลลัพธ์ที่ได้จะยังไม่เป็นข้อมูลที่นำไปใช้งานได้ทันที ต้องใช้คำสั่ง .json() เพื่อแกะข้อมูล (Parse) ออกมา
+        if (result.status === 'success') { // ตรวจสอบว่าการเพิ่มบ้านสำเร็จหรือไม่ โดยดูจากค่า status ที่ API ตอบกลับมา ถ้าเป็น 'success' แสดงว่าเพิ่มบ้านสำเร็จ
+            document.getElementById('inputHouseNumber').value = ''; // เคลียร์ช่องกรอกเลขที่บ้านให้ว่างเปล่า เพื่อเตรียมพร้อมสำหรับการเพิ่มบ้านใหม่ในครั้งถัดไป
+            document.getElementById('inputHouseName').value = ''; // เคลียร์ช่องกรอกชื่อบ้านให้ว่างเปล่า เพื่อเตรียมพร้อมสำหรับการเพิ่มบ้านใหม่ในครั้งถัดไป
+            showToast(`✅ เพิ่มบ้าน ${houseNumber} แล้ว`); // แสดงข้อความแจ้งเตือนว่าบ้านที่มีเลขที่บ้านตามที่ผู้ใช้กรอกได้ถูกเพิ่มเข้าไปในระบบแล้ว โดยใช้ฟังก์ชัน showToast เพื่อแสดงข้อความนี้บนหน้าเว็บ
+            await loadHouseCrud(); // โหลดข้อมูลบ้านทั้งหมดใหม่อีกครั้งเพื่อให้แสดงรายการบ้านที่ถูกเพิ่มเข้าไปล่าสุด
+            await loadHouseStatus(); // โหลดสถานะของบ้านทั้งหมดใหม่อีกครั้งเพื่อให้แสดงสถานะของบ้านที่ถูกเพิ่มเข้าไปล่าสุด
+        } else {
+            showToast('⚠️ ' + result.message); //
+        }
+    } catch(e) { showToast('❌ เชื่อมต่อ server ไม่ได้'); } //
+
+    btn.disabled = false; btn.textContent = '+ เพิ่มบ้าน'; // เปิดการใช้งานปุ่มเพิ่มบ้านอีกครั้ง และเปลี่ยนข้อความบนปุ่มกลับเป็น '+ เพิ่มบ้าน' เพื่อให้ผู้ใช้สามารถเพิ่มบ้านใหม่ได้อีกครั้ง
+}
+
+// ลบบ้าน
+async function deleteHouse(houseNumber, btn) { // ฟังก์ชันนี้จะถูกเรียกเมื่อผู้ใช้คลิกปุ่มลบบ้าน โดยรับเลขที่บ้านและปุ่มที่ถูกคลิกเป็นพารามิเตอร์
+    if (!confirm(`ลบบ้าน ${houseNumber} ออกจากระบบ?\nข้อมูล token และ LINE ของบ้านนี้จะถูกลบด้วย`)) return; // แสดงกล่องยืนยันการลบบ้าน โดยใช้ฟังก์ชัน confirm() ซึ่งจะคืนค่าเป็น true หากผู้ใช้คลิก "ตกลง" และ false หากผู้ใช้คลิก "ยกเลิก" ถ้าผู้ใช้เลือก "ยกเลิก" จะหยุดการทำงานของฟังก์ชันนี้ด้วย return
+    btn.disabled = true; btn.textContent = 'กำลังลบ...'; // ปิดการใช้งานปุ่มลบบ้านเพื่อป้องกันการคลิกซ้ำ และเปลี่ยนข้อความบนปุ่มเป็น 'กำลังลบ...' เพื่อแจ้งให้ผู้ใช้ทราบว่ากำลังดำเนินการลบบ้านอยู่
+    
+    // ส่งคำขอลบบ้านไปยัง API โดยใช้ fetch ซึ่งเป็นฟังก์ชันที่ใช้ในการทำคำขอ HTTP ใน JavaScript
+    try {
+        const res = await fetch(`/api/admin/houses/${houseNumber}`, { method: 'DELETE' }); // เรียกใช้ API ที่ Endpoint /api/admin/houses/{houseNumber} เพื่อทำการลบบ้าน โดยใช้ HTTP Method เป็น DELETE ซึ่งเป็นมาตรฐานในการบอกว่าเราต้องการลบข้อมูลที่ระบุใน URL นั้นๆ
+        const result = await res.json(); // รอรับผลลัพธ์จาก API และแปรผลลัพธ์นั้นให้อยู่ในรูปแบบ JSON เพื่อให้สามารถตรวจสอบสถานะการลบบ้านได้
+        if (result.status === 'success') { 
+            showToast(`✅ ลบบ้าน ${houseNumber} แล้ว`);
+            await loadHouseCrud();
+            await loadHouseStatus();
+        } else {
+            showToast('⚠️ ' + result.message);
+            btn.disabled = false; btn.textContent = 'ลบ';
+        }
+    } catch(e) {
+        showToast('❌ เชื่อมต่อ server ไม่ได้');
+        btn.disabled = false; btn.textContent = 'ลบ';
+    }
+}
+
+// ==========================================
+// โหลดสถานะบ้านทั้งหมดจาก API
+// ==========================================
+async function loadHouseStatus() { // ฟังก์ชันนี้จะถูกเรียกเมื่อหน้าเว็บโหลดขึ้นมา เพื่อดึงข้อมูลสถานะของบ้านทั้งหมดจาก API และแสดงผลบนหน้าเว็บ
+    try {
+        const res = await fetch('/api/admin/line/status'); // เรียกใช้ API ที่ Endpoint /api/admin/line/status เพื่อดึงข้อมูลสถานะของบ้านทั้งหมด ซึ่งข้อมูลนี้จะรวมถึงว่าแต่ละบ้านมีการเชื่อมต่อกับ LINE OA หรือไม่
+        const result = await res.json(); // รอรับผลลัพธ์จาก API และแปรผลลัพธ์นั้นให้อยู่ในรูปแบบ JSON เพื่อให้สามารถตรวจสอบสถานะของบ้านแต่ละหลังได้
+        if (result.status !== 'success') return; 
+        renderHouseList(result.data); // 
+    } catch(e) { 
+        document.getElementById('houseList').innerHTML =
+            '<div style="color:#e11d48;padding:16px">โหลดข้อมูลไม่ได้ กรุณา refresh</div>';
+    }
+}
+
+// แปรรูปและแสดงผลสถานะของบ้านแต่ละหลังบนหน้าเว็บ
+function renderHouseList(houses) { // ฟังก์ชันนี้จะรับข้อมูลสถานะของบ้านทั้งหมด (houses) และแปรรูปเป็น HTML เพื่อแสดงผลบนหน้าเว็บ
+    const list = document.getElementById('houseList'); // เข้าถึงองค์ประกอบบนหน้าเว็บที่มี id เป็น 'houseList' และเก็บไว้ในตัวแปร list เพื่อใช้ในการแสดงผลสถานะของบ้านแต่ละหลัง
+    list.innerHTML = houses.map(h => ` 
+        <div> 
+            <div class="house-row"> 
+                <div class="house-num">${h.house_number}</div> 
+                <div class="house-name"> 
+                    ${h.house_name} 
+                    <div class="status-row"> 
+                        ${h.has_line  
+                            ? '<span class="badge badge-line">💬 LINE เชื่อมแล้ว</span>'  
+                            : '<span class="badge badge-noline">💬 ยังไม่เชื่อม LINE</span>'
+                        }
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;flex-shrink:0"> 
+                    ${h.has_line
+                        ? `<button class="btn-reset" onclick="resetLine('${h.house_number}', this)">🔄 Reset LINE</button>`
+                        : ''
+                    }
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ==========================================
+// Reset LINE User ID ของบ้านนั้น
+// ==========================================
+async function resetLine(houseNumber, btn) { // ฟังก์ชันนี้จะถูกเรียกเมื่อผู้ใช้คลิกปุ่ม "Reset LINE" สำหรับบ้านหลังนั้น โดยรับเลขที่บ้านและปุ่มที่ถูกคลิกเป็นพารามิเตอร์
+    //แค่ล้างข้อมูล LINE User ID ของบ้านนี้เท่านั้น เจ้าของบ้านยังอยู่ครบ แต่จะต้องแอด LINE OA และพิมพ์เลขบ้านใหม่เพื่อเชื่อมต่ออีกครั้ง
+    if (!confirm(`ล้าง LINE บ้าน ${houseNumber} ?
+เจ้าของใหม่ต้องแอด LINE OA และพิมพ์เลขบ้านใหม่`)) return; 
+    btn.disabled = true; 
+    btn.textContent = 'กำลัง reset...';
+
+    //fetch :คำสั่งส่งคำขอ (Request) วิ่งออกไปหาเซิร์ฟเวอร์ตามที่อยู่ที่เราสั่ง
+    try { // ส่งคำขอ reset LINE User ID ของบ้านนี้ไปยัง API โดยใช้ fetch ซึ่งเป็นฟังก์ชันที่ใช้ในการทำคำขอ HTTP ใน JavaScript
+        const res = await fetch('/api/admin/line/reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ houseNumber })
+        });
+        const result = await res.json();
+        if (result.status === 'success') {
+            showToast(`✅ ล้าง LINE บ้าน ${houseNumber} แล้ว`);
+            await loadHouseStatus(); // โหลดสถานะของบ้านทั้งหมดใหม่อีกครั้งเพื่อให้แสดงสถานะที่อัปเดตหลังจากการ reset LINE User ID ของบ้านนั้น
+        } else {
+            alert('เกิดข้อผิดพลาด: ' + result.message); // 
+            btn.disabled = false; // เปิดการใช้งานปุ่ม "Reset LINE" อีกครั้งเพื่อให้ผู้ใช้สามารถลอง reset ใหม่ได้
+            btn.textContent = '🔄 Reset LINE'; // เปลี่ยนข้อความบนปุ่มกลับเป็น '🔄 Reset LINE' เพื่อให้ผู้ใช้สามารถลอง reset ใหม่ได้
+        }
+    } catch(e) { //
+        alert('เชื่อมต่อ server ไม่ได้');
+        btn.disabled = false;
+        btn.textContent = '🔄 Reset LINE';
+    }
+}
+
+// ฟังก์ชันแสดงข้อความแจ้งเตือนแบบ Toast ที่จะปรากฏขึ้นมาชั่วคราวที่ด้านล่างของหน้าเว็บ
+function showToast(msg) { 
+    const t = document.createElement('div'); // 
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:999';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+
+// โหลดสถานะตอนเปิดหน้า
+window.addEventListener('DOMContentLoaded', () => { 
+    loadHouseCrud();
+    loadHouseStatus();
+});
+</script>
+</body>
+</html>

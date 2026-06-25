@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>กล้องหน้าหมู่บ้าน</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg:       #e8e9eb;
+    --panel:    #f2f3f4;
+    --border:   #c4c7cc;
+    --accent:   #3a3f4a;
+    --accent2:  #555b66;
+    --green:    #2e7d4f;
+    --red:      #c0392b;
+    --yellow:   #7a6000;
+    --text:     #1a1d22;
+    --text-dim: #6b7280;
+    --glow:     0 1px 4px rgba(0,0,0,0.12);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Kanit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+
+
+.wrap {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 24px 20px;
+    gap: 20px;
+}
+
+/* ── HEADER ── */
+.header {
+    width: 100%; max-width: 700px;
+    display: flex; align-items: center; justify-content: space-between;
+}
+
+.brand {
+    display: flex; align-items: center; gap: 12px;
+}
+.brand-icon {
+    width: 44px; height: 44px;
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: var(--glow);
+}
+.brand-name {
+    font-size: 20px; font-weight: 800;
+    letter-spacing: 3px;
+    color: var(--accent);
+}
+.brand-sub {
+    font-size: 11px; font-weight: 300;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+}
+
+.status-bar {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 8px 16px;
+}
+.status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.status-text {
+    font-size: 12px; font-weight: 400;
+    color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 1px;
+}
+
+/* ── MAIN AREA ── */
+.main {
+    display: flex; gap: 20px;
+    width: 100%; max-width: 1100px;
+    flex: 1;
+    min-height: 620px;
+}
+
+/* ── CAMERA PREVIEW ── */
+.camera-panel {
+    flex: 2;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    display: flex; flex-direction: column;
+    min-height: 580px;
+}
+.cam-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+}
+.cam-header span { font-size: 12px; color: var(--text-dim); letter-spacing: 1px; }
+.rec-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--red);
+    animation: blink 1s linear infinite;
+    margin-left: auto;
+}
+.cam-view {
+    flex: 1;
+    min-height: 500px;
+    background: #050810;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+}
+#localVideo {
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+.cam-placeholder {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 10px; color: var(--text-dim);
+    font-size: 13px;
+}
+.cam-placeholder .icon { font-size: 40px; opacity: 0.3; }
+
+/* Corner markers */
+.corner {
+    position: absolute;
+    width: 20px; height: 20px;
+    border-color: var(--accent);
+    border-style: solid;
+    opacity: 0.5;
+}
+.corner.tl { top:8px; left:8px; border-width:2px 0 0 2px; }
+.corner.tr { top:8px; right:8px; border-width:2px 2px 0 0; }
+.corner.bl { bottom:8px; left:8px; border-width:0 0 2px 2px; }
+.corner.br { bottom:8px; right:8px; border-width:0 2px 2px 0; }
+
+/* ── HOUSE BUTTONS ── */
+.houses-panel {
+    flex: 1;
+    display: flex; flex-direction: column;
+    gap: 12px;
+}
+
+.panel-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    font-weight: 600;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+}
+
+.house-btn {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    color: var(--text);
+    font-family: 'Kanit', sans-serif;
+}
+
+.house-btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.03), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.house-btn:hover::before { opacity: 1; }
+.house-btn:hover {
+    border-color: var(--accent);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+}
+.house-btn:active { transform: translateY(0); }
+.house-btn:disabled {
+    opacity: 0.4; cursor: not-allowed;
+    transform: none;
+}
+
+.house-btn.calling {
+    border-color: var(--yellow);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.house-btn.voice {
+    border-color: #3a7dff;
+    background: rgba(58,125,255,0.05);
+}
+.house-btn.voice:hover {
+    border-color: #2465d9;
+    transform: translateY(-2px);
+}
+.house-btn.voice .house-num { font-size: 28px; }
+@keyframes pulse-call {
+    0%,100% { box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    50%      { box-shadow: 0 4px 14px rgba(0,0,0,0.22); }
+}
+.house-btn.in-call {
+    border-color: var(--green);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+.house-num {
+    font-size: 36px; font-weight: 800;
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--accent);
+    line-height: 1;
+}
+.house-label { font-size: 13px; font-weight: 400; color: var(--text-dim); }
+.house-status {
+    font-size: 11px;
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    height: 16px;
+}
+.house-btn.calling .house-status { color: var(--yellow); }
+.house-btn.in-call .house-status { color: var(--green); }
+
+/* ── CALL OVERLAY ── */
+.call-overlay {
+    position: fixed; inset: 0;
+    background: rgba(50,55,65,0.7);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 20px;
+}
+.call-overlay.active { display: flex; }
+
+/* Confirmation modal for voice-detected house number */
+.confirm-modal {
+    position: fixed; inset: 0;
+    background: rgba(30,35,45,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 220;
+    display: none; align-items: center; justify-content: center;
+}
+.confirm-modal.active { display: flex; }
+.confirm-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 26px;
+    text-align: center;
+    min-width: 320px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+}
+.confirm-house-number { font-family: 'Share Tech Mono', monospace; font-size: 28px; color: var(--accent); margin: 8px 0 12px; }
+.confirm-actions { display:flex; gap:12px; justify-content:center; margin-top:12px; }
+.btn-confirm-yes { padding:10px 18px; background: var(--green); color:#fff; border:none; border-radius:10px; cursor:pointer; font-weight:700; }
+.btn-confirm-no  { padding:10px 18px; background:transparent; color:var(--red); border:1px solid rgba(192,57,43,0.2); border-radius:10px; cursor:pointer; }
+
+.call-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    min-width: 320px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.call-icon { font-size: 56px; margin-bottom: 16px; }
+.call-title { font-size: 22px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.call-sub { font-size: 14px; color: var(--text-dim); margin-bottom: 28px; }
+
+.btn-cancel-call {
+    width: auto;
+    padding: 12px 32px;
+    background: rgba(255,59,92,0.12);
+    border: 1px solid rgba(255,59,92,0.35);
+    border-radius: 50px;
+    color: var(--red);
+    font-family: 'Kanit', sans-serif;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative; z-index: 1;
+}
+.btn-cancel-call:hover {
+    background: rgba(192,57,43,0.18);
+}
+
+.ring-animation {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.06);
+    border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    position: relative;
+    margin: 0 auto 20px;
+}
+.ring-animation::before, .ring-animation::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    animation: ring-out 1.5s ease-out infinite;
+}
+.ring-animation::after { animation-delay: 0.5s; }
+@keyframes ring-out {
+    0%   { width: 80px; height: 80px; opacity: 0.4; }
+    100% { width: 160px; height: 160px; opacity: 0; }
+}
+
+/* In-call overlay with video */
+.incall-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+.incall-overlay.active { display: flex; }
+
+/* Card wrapper */
+.incall-card {
+    width: 100%;
+    max-width: 780px;
+    max-height: 90vh;
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+}
+
+.incall-header {
+    padding: 12px 20px;
+    background: #dde1e8;
+    border-bottom: 1px solid #c4c7cc;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+}
+.incall-info {
+    display: flex; align-items: center; gap: 12px;
+}
+.live-badge {
+    background: #c0392b;
+    color: #fff;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 4px;
+    letter-spacing: 2px;
+    animation: blink 1s linear infinite;
+}
+.incall-room {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px; color: #6b7280;
+}
+.timer-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 20px; font-weight: 700;
+    color: #b07d00;
+    letter-spacing: 2px;
+}
+
+.incall-video {
+    position: relative;
+    background: #111;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    width: 100%;
+}
+#incallLocalVideo {
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+.incall-label {
+    position: absolute; top: 16px; left: 20px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    padding: 6px 14px; border-radius: 6px;
+    font-size: 12px; color: rgba(255,255,255,0.6);
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.incall-bar {
+    padding: 14px 24px;
+    background: #dde1e8;
+    border-top: 1px solid #c4c7cc;
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    flex-shrink: 0;
+}
+
+.audio-indicator {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(46,125,79,0.1);
+    border: 1px solid rgba(46,125,79,0.25);
+    border-radius: 20px;
+    padding: 8px 18px;
+    font-size: 13px; color: #2e7d4f;
+}
+
+.btn-endcall {
+    padding: 12px 36px;
+    background: #c0392b;
+    border: none;
+    border-radius: 50px;
+    color: #ffffff;
+    font-family: 'Kanit', sans-serif;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(192,57,43,0.25);
+}
+.btn-endcall:hover {
+    background: #a93226;
+    box-shadow: 0 4px 14px rgba(192,57,43,0.35);
+}
+
+/* Toast */
+.toast {
+    position: fixed; bottom: 30px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 14px; color: var(--text);
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* OCR Overlay */
+.ocr-overlay {
+    position: fixed; inset: 0;
+    background: rgba(20,24,32,0.92);
+    z-index: 150;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 16px;
+    overflow-y: auto;
+}
+.ocr-overlay.active { display: flex; }
+.ocr-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 18px 22px;
+    width: 100%;
+    max-width: 820px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    margin: auto;
+}
+.ocr-card.wide { max-width: 820px; }
+.ocr-body { display: grid; grid-template-columns: 1fr 0fr; gap: 0; align-items: flex-start; transition: grid-template-columns 0.2s; }
+.ocr-body.show-right { grid-template-columns: 1fr 230px; gap: 20px; }
+.ocr-left  { min-width: 0; }
+.ocr-right { width: 230px; flex-shrink: 0; display: none; overflow: hidden; }
+.ocr-right.show { display: block; }
+.ocr-title { font-size: 16px; font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+.ocr-house-label {
+    font-size: 15px; font-weight: 800;
+    color: var(--accent);
+    margin: 6px 0 8px 0;
+    letter-spacing: 0.4px;
+}
+.ocr-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 12px; }
+.ocr-preview {
+    width: 100%; aspect-ratio: 4/3;
+    max-height: 50vh;
+    background: #111;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: center;
+}
+.ocr-preview video, .ocr-preview canvas, .ocr-preview img {
+    width: 100%; height: 100%; object-fit: contain; position: absolute; inset: 0;
+}
+.ocr-preview canvas { display: none; }
+.ocr-guide {
+    position: absolute; inset: 10%;
+    border: 2px dashed rgba(255,255,255,0.4);
+    border-radius: 8px;
+    pointer-events: none;
+}
+.ocr-guide-text {
+    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.8);
+    padding: 4px 12px; border-radius: 20px; font-size: 11px;
+    white-space: nowrap;
+}
+.ocr-result {
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    border-radius: 10px; padding: 10px 14px;
+    display: block;
+}
+.ocr-top-row {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 14px; margin-bottom: 12px;
+}
+.btn-ocr-cancel-sm {
+    min-width: 98px;
+    padding: 8px 12px;
+    background: rgba(192,57,43,0.08);
+    border: 1px solid rgba(192,57,43,0.2);
+    color: var(--red);
+    border-radius: 12px;
+    font-size: 12px;
+}
+.btn-ocr-cancel-sm:hover {
+    background: rgba(192,57,43,0.14);
+}
+.selected-house-label {
+    margin-left: auto;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.ocr-result-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    color: var(--text-dim); margin-bottom: 6px;
+}
+.ocr-result-row { display: flex; flex-direction: column; font-size: 12px; margin-bottom: 4px; }
+.ocr-result-label { color: var(--text-dim); font-size: 11px; margin-bottom: 2px; }
+.ocr-result-val { color: var(--text); font-weight: 600; font-size: 13px; word-break: break-all; }
+/* OCR action buttons */
+.ocr-actions-initial {
+    display: flex; gap: 10px;
+}
+.ocr-actions-after {
+    display: none;
+    flex-direction: column; gap: 10px;
+}
+.ocr-actions-after.show { display: flex; }
+.ocr-actions-after-row { display: flex; gap: 10px; }
+
+.btn-capture-main {
+    flex: 1; padding: 11px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 10px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+}
+.btn-capture-main:hover { filter: brightness(1.1); }
+
+.btn-ocr-call {
+    flex: 1; padding: 11px;
+    background: var(--green); color: #fff;
+    border: none; border-radius: 10px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+}
+.btn-ocr-call:hover { filter: brightness(1.1); }
+
+.btn-ocr-retake {
+    flex: 1; padding: 11px;
+    background: transparent; color: var(--accent);
+    border: 1px solid var(--border); border-radius: 10px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+}
+.btn-ocr-retake:hover { background: var(--border); }
+
+.btn-ocr-cancel {
+    width: 100%; padding: 9px;
+    background: transparent; color: var(--red);
+    border: 1px solid rgba(192,57,43,0.3); border-radius: 10px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+}
+.btn-ocr-cancel:hover { background: rgba(192,57,43,0.08); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+    <!-- HEADER -->
+    <header class="header">
+        <div class="brand">
+            <div>
+                <div class="brand-name">VILLAGE GUARD</div>
+                <div class="brand-sub">ระบบรักษาความปลอดภัย • หน้าหมู่บ้าน</div>
+            </div>
+        </div>
+        <div class="status-bar">
+            <div class="status-dot" id="statusDot"></div>
+            <span class="status-text" id="statusText">CONNECTING...</span>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <div class="main">
+        <!-- Camera Preview -->
+        <div class="camera-panel">
+            <div class="cam-header">
+                <span>CAM-01 · ENTRANCE</span>
+                <div class="selected-house-label" id="selectedHouseHeader" style="display:none;"></div>
+                <div class="rec-dot"></div>
+            </div>
+            <div class="cam-view">
+                <div id="localVideoWrap" style="width:100%;height:100%;"></div>
+                <div class="cam-placeholder" id="camPlaceholder">
+                    <div>กำลังเปิดกล้อง...</div>
+                </div>
+                <div class="corner tl"></div>
+                <div class="corner tr"></div>
+                <div class="corner bl"></div>
+                <div class="corner br"></div>
+            </div>
+        </div>
+
+        <!-- House Buttons — โหลดจาก API -->
+        <div class="houses-panel">
+            <div class="panel-label">SELECT UNIT · กดเพื่อติดต่อ</div>
+            <button class="house-btn voice" id="voiceBtn" onclick="startSpeechRecognition()">
+                <div class="house-num">🎙</div>
+                <div class="house-label">สั่งด้วยเสียง</div>
+                <div class="house-status" id="voiceStatus">● กดเพื่อพูด</div>
+            </button>
+            <div id="houseBtnContainer" style="display:contents;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- OCR OVERLAY -->
+<div class="ocr-overlay" id="ocrOverlay">
+    <div class="ocr-card">
+        <div class="ocr-top-row">
+            <div>
+                <div class="ocr-title">🪪 สแกนบัตร</div>
+                <div class="ocr-house-label" id="ocrSelectedHouseHeader" style="display:none;"></div>
+                <div class="ocr-sub" id="ocrSub">จัดบัตรให้อยู่ในกรอบ แล้วกดถ่ายภาพ</div>
+            </div>
+        </div>
+    <div class="ocr-body">
+      <!-- ซ้าย: กล้อง + ปุ่ม -->
+      <div class="ocr-left">
+        <div class="ocr-preview">
+            <video id="ocrVideo" autoplay playsinline muted></video>
+            <img id="vigiImg" style="display:none;" alt="VIGI preview">
+            <canvas id="ocrCanvas"></canvas>
+            <div class="ocr-guide">
+                <div class="ocr-guide-text">จัดบัตรให้อยู่ในกรอบ</div>
+            </div>
+        </div>
+        <!-- ก่อนถ่าย -->
+        <div class="ocr-actions-initial" id="ocrActionsInitial" style="margin-top:10px;">
+            <button class="btn-capture-main" id="btnCapture" onclick="captureOcr()">ถ่ายภาพ</button>
+        </div>
+        <button class="btn-ocr-cancel" id="btnCancelInitial" onclick="cancelOcrScan()" style="width:100%;margin-top:6px;">✕ ยกเลิกการสแกน</button>
+        <!-- หลังถ่ายเสร็จ -->
+        <div class="ocr-actions-after" id="ocrActionsAfter" style="margin-top:10px;">
+            <div class="ocr-actions-after-row">
+                <button class="btn-ocr-call" id="btnOcrCall" onclick="confirmOcrAndCall()">โทรเลย</button>
+                <button class="btn-ocr-retake" id="btnRetake" onclick="retakeOcr()">ถ่ายใหม่</button>
+            </div>
+            <button class="btn-ocr-cancel" onclick="cancelOcrScan()" style="margin-top:6px;">✕ ยกเลิกการสแกน</button>
+        </div>
+      </div>
+      <!-- ขวา: ข้อมูลบัตร (โผล่หลังถ่ายเสร็จ) -->
+      <div class="ocr-right" id="ocrRight">
+        <div class="ocr-result" id="ocrResult">
+            <div class="ocr-result-title">🪪 ข้อมูลบัตร</div>
+            <div class="ocr-result-row"><span class="ocr-result-label">ประเภทบัตร</span><span class="ocr-result-val" id="ocrCardType">—</span></div>
+            <div class="ocr-result-row"><span class="ocr-result-label">ชื่อ (ไทย)</span><span class="ocr-result-val" id="ocrNameTh">—</span></div>
+            <div class="ocr-result-row"><span class="ocr-result-label">ชื่อ (Eng)</span><span class="ocr-result-val" id="ocrNameEn">—</span></div>
+            <div class="ocr-result-row"><span class="ocr-result-label">เลขบัตร</span><span class="ocr-result-val" id="ocrIdNumber">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+<!-- Confirmation modal for voice input -->
+<div class="confirm-modal" id="confirmVoiceModal">
+    <div class="confirm-box">
+        <div class="call-title">ยืนยันหมายเลขบ้าน</div>
+        <div class="call-sub">ต้องการติดต่อบ้านเลขที่</div>
+        <div class="confirm-house-number" id="confirmHouseNumber">—</div>
+        <div class="confirm-actions">
+            <button class="btn-confirm-yes" id="confirmYesBtn" onclick="confirmVoiceContact()">ยืนยัน</button>
+            <button class="btn-confirm-no" id="confirmNoBtn" onclick="cancelVoiceContact()">ยกเลิก</button>
+        </div>
+    </div>
+</div>
+
+<!-- CALLING OVERLAY -->
+<div class="call-overlay" id="callingOverlay">
+    <div class="ring-animation">📞</div>
+    <div class="call-box">
+        <div class="call-title" id="callingTitle">กำลังโทรหา...</div>
+        <div class="call-sub" id="callingSub">รอลูกบ้านรับสาย</div>
+        <button class="btn-cancel-call" onclick="cancelCall()">ยกเลิกการโทร</button>
+    </div>
+</div>
+
+<!-- IN-CALL OVERLAY -->
+<div class="incall-overlay" id="incallOverlay">
+  <div class="incall-card">
+    <div class="incall-header">
+        <div class="incall-info">
+            <div class="live-badge">LIVE</div>
+            <div class="incall-room" id="incallRoomCode"></div>
+        </div>
+        <div class="timer-badge" id="callTimer">02:00</div>
+    </div>
+    <div class="incall-video">
+        <div id="incallLocalVideo" style="width:100%;height:100%;"></div>
+        <div class="incall-label">📷 CAMERA — ENTRANCE (กล้องของคุณ)</div>
+    </div>
+    <div class="incall-bar">
+        <button class="btn-endcall" onclick="endCall()">วางสาย</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://web.sdk.qcloud.com/trtc/webrtc/v5/dist/trtc.js"></script>
+<script>
+// ==========================================
+// State
+// ==========================================
+const socket = io();
+let trtc = TRTC.create();
+let currentRoom = null;   // { roomCode, roomId, userId, sdkAppId, userSig, houseNumber }
+let callTimerInterval = null;
+let callSecondsLeft = 120; // 2 min
+
+// OCR state
+let ocrHouseTarget = null;   // บ้านที่กำลังจะโทร
+let ocrResult     = null;    // ผล OCR
+let ocrStream     = null;    // camera stream สำหรับสแกนบัตร
+let speechStream  = null;    // audio stream สำหรับคำสั่งเสียง
+let speechRecorder = null;
+let voiceListening = false;
+
+function updateVoiceStatus(text) {
+    const status = document.getElementById('voiceStatus');
+    if (status) status.textContent = '● ' + text;
+}
+
+async function startSpeechRecognition() {
+    if (voiceListening) return;
+    const voiceBtn = document.getElementById('voiceBtn');
+    if (voiceBtn) voiceBtn.disabled = true;
+    updateVoiceStatus('กำลังฟัง... โปรดพูดเลขบ้าน');
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        speechStream = stream;
+        speechRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+        const chunks = [];
+
+        speechRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) chunks.push(event.data);
+        };
+        speechRecorder.onstop = async () => {
+            voiceListening = false;
+            await sendSpeechBlob(chunks);
+        };
+
+        speechRecorder.start();
+        voiceListening = true;
+        setTimeout(() => {
+            if (speechRecorder && speechRecorder.state === 'recording') {
+                speechRecorder.stop();
+            }
+        }, 3000);
+    } catch (err) {
+        console.warn('Speech init failed:', err.message);
+        updateVoiceStatus('ไม่สามารถใช้ไมโครโฟนได้');
+        if (voiceBtn) voiceBtn.disabled = false;
+        stopSpeechRecognition();
+    }
+}
+
+async function sendSpeechBlob(chunks) {
+    const voiceBtn = document.getElementById('voiceBtn');
+    if (speechStream) stopSpeechRecognition();
+    if (!chunks || chunks.length === 0) {
+        updateVoiceStatus('ไม่ได้ยินเสียง ลองใหม่');
+        if (voiceBtn) voiceBtn.disabled = false;
+        return;
+    }
+
+    const blob = new Blob(chunks, { type: 'audio/webm' });
+    const form = new FormData();
+    form.append('audio', blob, 'voice.webm');
+
+    try {
+        const res = await fetch('/api/speech-to-text', { method: 'POST', body: form });
+        const json = await res.json();
+            if (json.status === 'success' && json.data) {
+            const transcription = json.data.transcript || 'ไม่พบคำพูด';
+            const houseNumber = json.data.houseNumber;
+            if (houseNumber) {
+                updateVoiceStatus(`ได้บ้าน ${houseNumber}`);
+                showToast(`ได้เลขบ้าน ${houseNumber}`);
+                // Show confirmation modal so rider can confirm the detected number
+                showConfirmHouse(houseNumber);
+            } else {
+                updateVoiceStatus(`ไม่พบเลขบ้าน: ${transcription}`);
+                showToast('ไม่พบเลขบ้านจากเสียง');
+            }
+        } else {
+            updateVoiceStatus('แปลงเสียงล้มเหลว');
+            showToast(json.message || 'Speech-to-text failed');
+        }
+    } catch (err) {
+        console.error('Speech upload failed:', err);
+        updateVoiceStatus('Speech-to-text ล้มเหลว');
+        showToast('ไม่สามารถแปลงเสียงได้');
+    }
+    if (voiceBtn) voiceBtn.disabled = false;
+}
+
+function stopSpeechRecognition() {
+    if (speechRecorder && speechRecorder.state === 'recording') {
+        speechRecorder.stop();
+    }
+    if (speechStream) {
+        speechStream.getTracks().forEach(t => t.stop());
+        speechStream = null;
+    }
+    speechRecorder = null;
+    voiceListening = false;
+}
+
+window.addEventListener('beforeunload', () => stopSpeechRecognition());
+
+// ==========================================
+// Socket Connection
+// ==========================================
+socket.on('connect', () => {
+    socket.emit('register_camera');
+    setStatus(true, 'ONLINE · CAMERA');
+});
+
+socket.on('disconnect', () => {
+    setStatus(false, 'DISCONNECTED');
+});
+
+function setStatus(online, text) {
+    document.getElementById('statusDot').style.background = online ? 'var(--green)' : 'var(--red)';
+    document.getElementById('statusDot').style.boxShadow = 'none';
+    document.getElementById('statusText').textContent = text;
+}
+
+// ==========================================
+// Ring a house — เปิด OCR overlay ก่อนโทร
+// ==========================================
+async function ringHouse(houseNumber) {
+    if (currentRoom) return;
+    ocrHouseTarget = houseNumber;
+    ocrResult = null;
+    updateSelectedHouseHeader(houseNumber);
+    // reset OCR UI
+    document.getElementById('ocrRight').classList.remove('show');
+    document.getElementById('ocrActionsInitial').style.display = 'flex';
+    document.getElementById('btnCancelInitial').style.display = 'block';
+    document.getElementById('ocrActionsAfter').classList.remove('show');
+    document.getElementById('btnCapture').disabled = false;
+    document.getElementById('btnCapture').textContent = 'ถ่ายภาพ';
+    document.getElementById('ocrSub').textContent = 'จัดบัตรให้อยู่ในกรอบ แล้วกดถ่ายภาพ';
+    document.getElementById('ocrCanvas').style.display = 'none';
+    // เปิดกล้องสำหรับสแกนบัตร
+    // ── ถ้าเปิด VIGI mode ให้แสดง snapshot จากกล้อง IP แทน webcam ──
+    document.getElementById('ocrOverlay').classList.add('active');
+    if (window.useVigiCamera) {
+        await startVigiPreview();
+    } else {
+        try {
+            ocrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: 1280, height: 720 }, audio: false });
+            document.getElementById('ocrVideo').srcObject = ocrStream;
+        } catch(e) {
+            skipOcrAndCall();
+            return;
+        }
+    }
+}
+
+// ==========================================
+// VIGI Camera Mode — MJPEG stream ผ่าน <img> โดยตรง
+// ==========================================
+window.useVigiCamera = true; // เปลี่ยนเป็น false เพื่อกลับไปใช้ webcam
+
+let vigiLoopActive  = false;
+let vigiRestartTimer = null;
+
+function startVigiPreview() {
+    const video   = document.getElementById('ocrVideo');
+    const canvas  = document.getElementById('ocrCanvas');
+    const vigiImg = document.getElementById('vigiImg');
+
+    video.style.display   = 'none';
+    canvas.style.display  = 'none';
+    vigiImg.style.display = 'block';
+    vigiLoopActive = true;
+
+    function connectStream() {
+        if (!vigiLoopActive) return;
+        vigiImg.src = '/api/vigi-stream?' + Date.now();
+        // restart ทุก 30 วินาที เพื่อ flush memory ที่ browser สะสมจาก MJPEG
+        vigiRestartTimer = setTimeout(connectStream, 30000);
+    }
+
+    connectStream();
+}
+
+function stopVigiPreview() {
+    vigiLoopActive = false;
+    if (vigiRestartTimer) { clearTimeout(vigiRestartTimer); vigiRestartTimer = null; }
+    const vigiImg = document.getElementById('vigiImg');
+    vigiImg.src = '';
+    vigiImg.style.display = 'none';
+}
+
+
+// ถ่ายภาพและส่ง OCR
+async function captureOcr() {
+    const video   = document.getElementById('ocrVideo');
+    const canvas  = document.getElementById('ocrCanvas');
+    const vigiImg = document.getElementById('vigiImg');
+    const btn     = document.getElementById('btnCapture');
+
+    if (window.useVigiCamera) {
+        // หยุด MJPEG preview แล้วดึง snapshot คมชัด full-res จาก main stream มาทำ OCR
+        stopVigiPreview();
+        try {
+            const r = await fetch('/api/vigi-snapshot?t=' + Date.now());
+            if (!r.ok) throw new Error('snapshot failed');
+            const blob = await r.blob();
+            const url  = URL.createObjectURL(blob);
+            const im   = new Image();
+            await new Promise((ok, no) => { im.onload = ok; im.onerror = no; im.src = url; });
+            canvas.width  = im.naturalWidth  || 1280;
+            canvas.height = im.naturalHeight || 720;
+            canvas.getContext('2d').drawImage(im, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            // fallback: ใช้เฟรม preview ที่ค้างอยู่บน <img>
+            canvas.width  = vigiImg.naturalWidth  || vigiImg.width  || 1280;
+            canvas.height = vigiImg.naturalHeight || vigiImg.height || 720;
+            canvas.getContext('2d').drawImage(vigiImg, 0, 0, canvas.width, canvas.height);
+        }
+        canvas.style.display = 'block';
+    } else {
+        // Webcam: วาดจาก video element
+        canvas.width  = video.videoWidth  || 1280;
+        canvas.height = video.videoHeight || 720;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.style.display = 'block';
+        video.style.display  = 'none';
+        if (ocrStream) { ocrStream.getTracks().forEach(t => t.stop()); ocrStream = null; }
+    }
+
+    btn.disabled = true;
+    document.getElementById('ocrSub').textContent = 'กำลังประมวลผล OCR...';
+
+    try {
+        canvas.toBlob(async (blob) => {
+            const form = new FormData();
+            form.append('photo', blob, 'id-card.jpg');
+            const res    = await fetch('/api/ocr', { method: 'POST', body: form });
+            const result = await res.json();
+
+            if (result.status === 'success' && result.data) {
+                ocrResult = result.data;
+                document.getElementById('ocrCardType').textContent = result.data.cardType  || 'ไม่ระบุประเภท';
+                document.getElementById('ocrNameTh').textContent   = result.data.nameTh   || '—';
+                document.getElementById('ocrNameEn').textContent   = result.data.nameEn   || '—';
+                document.getElementById('ocrIdNumber').textContent = result.data.idNumber || '—';
+                document.getElementById('ocrResult').classList.add('show');
+                document.getElementById('ocrRight').classList.add('show');
+                document.querySelector('.ocr-body').classList.add('show-right');
+                document.querySelector('.ocr-card').classList.add('wide');
+                document.getElementById('ocrActionsInitial').style.display = 'none';
+                document.getElementById('btnCancelInitial').style.display = 'none';
+                document.getElementById('ocrActionsAfter').classList.add('show');
+                document.getElementById('ocrSub').textContent = '✅ อ่านบัตรสำเร็จ กด "โทรเลย" เพื่อดำเนินการต่อ';
+            } else {
+                document.getElementById('ocrSub').textContent = '⚠️ อ่านบัตรไม่ได้ ลองถ่ายใหม่อีกครั้ง';
+                btn.disabled = false;
+                btn.textContent = 'ถ่ายภาพ';
+                // restart preview ตาม mode
+                if (window.useVigiCamera) {
+                    canvas.style.display = 'none';
+                    startVigiPreview();
+                } else {
+                    video.style.display = 'block';
+                    canvas.style.display = 'none';
+                }
+            }
+        }, 'image/jpeg', 0.9);
+    } catch(e) {
+        document.getElementById('ocrSub').textContent = '❌ เกิดข้อผิดพลาด ลองใหม่';
+        btn.disabled = false;
+        btn.textContent = 'ถ่ายภาพ';
+    }
+}
+
+// กดยืนยันหลัง OCR สำเร็จ → โทร
+async function confirmOcrAndCall() {
+    closeOcrOverlay();
+
+    // บันทึก visitor log ก่อนโทร เพื่อให้ลูกบ้านที่เปิดจาก push link เห็นข้อมูลด้วย
+    if (ocrResult && ocrHouseTarget) {
+        try {
+            await fetch('/api/visitor-log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    houseNumber: ocrHouseTarget,
+                    roomCode: null,
+                    idNumber:  ocrResult.idNumber  || null,
+                    nameTh:    ocrResult.nameTh    || null,
+                    nameEn:    ocrResult.nameEn    || null,
+                    birthDate: ocrResult.birthDate || null,
+                    cardType:  ocrResult.cardType  || null,
+                    ocrRaw:    ocrResult.rawText   || null,
+                })
+            });
+        } catch(e) {
+            console.warn('visitor-log save failed:', e.message);
+        }
+    }
+
+    doRing(ocrHouseTarget, ocrResult);
+}
+
+// ถ่ายใหม่ — reset กลับไปหน้ากล้อง
+function retakeOcr() {
+    const video  = document.getElementById('ocrVideo');
+    const canvas = document.getElementById('ocrCanvas');
+    // ซ่อนผลเดิม + สลับปุ่ม
+    document.getElementById('ocrRight').classList.remove('show');
+    document.querySelector('.ocr-body').classList.remove('show-right');
+    document.querySelector('.ocr-card').classList.remove('wide');
+    document.getElementById('ocrActionsInitial').style.display = 'flex';
+    document.getElementById('btnCancelInitial').style.display = 'block';
+    document.getElementById('ocrActionsAfter').classList.remove('show');
+    canvas.style.display = 'none';
+    document.getElementById('btnCapture').disabled    = false;
+    document.getElementById('btnCapture').textContent = 'ถ่ายภาพ';
+    document.getElementById('ocrSub').textContent     = 'จัดบัตรให้อยู่ในกรอบ แล้วกดถ่ายภาพ';
+    ocrResult = null;
+
+    // restart preview ตาม mode
+    if (window.useVigiCamera) {
+        startVigiPreview(); // reconnect MJPEG stream
+    } else {
+        video.style.display = 'block';
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: 1280, height: 720 }, audio: false })
+            .then(s => { ocrStream = s; video.srcObject = s; })
+            .catch(e => console.warn('retake camera error:', e.message));
+    }
+}
+
+// ยกเลิกการสแกน → ปิด overlay กลับหน้าเลือกบ้าน
+function cancelOcrScan() {
+    closeOcrOverlay();
+    ocrHouseTarget = null;
+    ocrResult = null;
+    updateSelectedHouseHeader(null);
+}
+
+function updateSelectedHouseHeader(houseNumber) {
+    const label = document.getElementById('selectedHouseHeader');
+    const ocrLabel = document.getElementById('ocrSelectedHouseHeader');
+    if (label) {
+        if (houseNumber) {
+            label.textContent = `บ้าน ${houseNumber}`;
+            label.style.display = 'inline-flex';
+        } else {
+            label.textContent = '';
+            label.style.display = 'none';
+        }
+    }
+    if (ocrLabel) {
+        if (houseNumber) {
+            ocrLabel.textContent = `สำหรับบ้าน ${houseNumber}`;
+            ocrLabel.style.display = 'block';
+        } else {
+            ocrLabel.textContent = '';
+            ocrLabel.style.display = 'none';
+        }
+    }
+}
+
+function closeOcrOverlay() {
+    document.getElementById('ocrOverlay').classList.remove('active');
+    document.querySelector('.ocr-card').classList.remove('wide');
+    document.querySelector('.ocr-body').classList.remove('show-right');
+    stopVigiPreview(); // ล้าง src → browser ปิด HTTP stream connection
+    if (ocrStream) { ocrStream.getTracks().forEach(t => t.stop()); ocrStream = null; }
+    const video = document.getElementById('ocrVideo');
+    video.srcObject = null;
+    video.style.display = 'none';
+    document.getElementById('ocrCanvas').style.display = 'none';
+}
+
+// โทรจริง (แยกออกมาจาก ringHouse)
+function doRing(houseNumber, visitorInfo) {
+    if (currentRoom) return;
+    setBtnState(houseNumber, 'calling', 'CALLING...');
+    setAllBtnsDisabled(true, houseNumber);
+    document.getElementById('callingTitle').textContent = `กำลังโทรหา บ้าน ${houseNumber}`;
+    document.getElementById('callingSub').textContent = 'รอลูกบ้านรับสาย...';
+    document.getElementById('callingOverlay').classList.add('active');
+    const payload = visitorInfo ? {
+        nameTh:    visitorInfo.nameTh    || null,
+        nameEn:    visitorInfo.nameEn    || null,
+        idNumber:  visitorInfo.idNumber  || null,
+        birthDate: visitorInfo.birthDate || null,
+        cardType:  visitorInfo.cardType  || null,
+    } : null;
+    socket.emit('ring', { houseNumber, visitorInfo: payload });
+}
+
+// ── Server: room created → wait for accept ──
+socket.on('room_created', (data) => {
+    currentRoom = data;
+    console.log('Room created, waiting for resident...', data.roomCode);
+});
+
+// ── ลูกบ้าน offline แต่ส่ง push แล้ว → แจ้งให้ไรเดอร์ทราบ ถือสายรอต่อ ──
+socket.on('ring_offline', ({ message }) => {
+    document.getElementById('callingSub').textContent = '📲 ส่ง push notification แล้ว รอลูกบ้านกดรับ...';
+    showToast('📴 ' + message);
+});
+
+// ── Resident accepted → enter TRTC room ──
+socket.on('call_accepted', async ({ roomCode, startAt }) => {
+    if (!currentRoom || currentRoom.roomCode !== roomCode) return;
+    document.getElementById('callingOverlay').classList.remove('active');
+    showIncall();
+    const localStartAt = Date.now(); // บันทึก timestamp ตอน event มาถึง ไม่รอ network delay
+    startCallTimer(localStartAt);
+    await enterRoom(localStartAt);
+});
+
+// ── Ring error ──
+socket.on('ring_error', ({ message }) => {
+    document.getElementById('callingOverlay').classList.remove('active');
+    resetAllBtns();
+    currentRoom = null;
+    showToast('⚠️ ' + message);
+});
+
+// ==========================================
+// Cancel Call (ยกเลิกระหว่างรอลูกบ้านรับ)
+// ==========================================
+async function cancelCall() {
+    if (!currentRoom) {
+        // ยังไม่ได้รับ room_created กลับมา แค่ปิด UI
+        document.getElementById('callingOverlay').classList.remove('active');
+        resetAllBtns();
+        currentRoom = null;
+        showToast('❌ ยกเลิกการโทรแล้ว');
+        return;
+    }
+    // ส่ง end_call ให้ server ปิดห้องและแจ้งลูกบ้านด้วย
+    socket.emit('end_call', { roomCode: currentRoom.roomCode });
+}
+
+// ── Call ended (by resident or timeout) ──
+socket.on('call_ended', ({ reason }) => {
+    const msgs = { rejected: '❌ ลูกบ้านปฏิเสธสาย', hangup: 'วางสายแล้ว', timeout: 'หมดเวลาอัตโนมัติ' };
+    handleCallEnd(msgs[reason] || 'สายหลุด');
+});
+
+// ==========================================
+// TRTC
+// ==========================================
+async function enterRoom(startAt) {
+    const { sdkAppId, userId, userSig, roomId, roomCode } = currentRoom;
+
+    registerTRTCEvents();
+
+    await trtc.enterRoom({
+        roomId: parseInt(roomId),
+        sdkAppId: parseInt(sdkAppId),
+        userId,
+        userSig
+    });
+
+    // Camera: start video + audio (mic permission ได้ขอไว้ล่วงหน้าตอน preview แล้ว)
+    try {
+        await trtc.startLocalVideo({ view: 'incallLocalVideo' });
+        document.getElementById('camPlaceholder').style.display = 'none';
+    } catch(e) {
+        console.warn('No camera:', e.message);
+    }
+    trtc.startLocalAudio().catch(e => console.warn('No mic:', e.message));
+
+    document.getElementById('incallRoomCode').textContent = 'ROOM: ' + roomCode;
+    // timer ถูกเริ่มก่อน enterRoom แล้วใน call_accepted handler
+}
+
+function registerTRTCEvents() {
+    trtc.on(TRTC.EVENT.REMOTE_AUDIO_AVAILABLE, ({ userId }) => {
+        trtc.startRemoteAudio({ userId });
+    });
+}
+
+// ==========================================
+// In-call UI
+// ==========================================
+function showIncall() {
+    document.getElementById('incallOverlay').classList.add('active');
+    const house = currentRoom?.houseNumber;
+    if (house) setBtnState(house, 'in-call', 'IN CALL');
+}
+
+function startCallTimer(startAt) {
+    clearInterval(callTimerInterval);
+    const CALL_DURATION = 120; // ต้องตรงกับ AUTO_CLOSE_MS ใน server
+    function tick() {
+        const elapsed = Math.floor((Date.now() - startAt) / 1000);
+        callSecondsLeft = Math.max(0, CALL_DURATION - elapsed);
+        updateTimerDisplay();
+        if (callSecondsLeft <= 0) clearInterval(callTimerInterval);
+    }
+    tick();
+    callTimerInterval = setInterval(tick, 500);
+}
+
+function updateTimerDisplay() {
+    const m = Math.floor(callSecondsLeft / 60);
+    const s = callSecondsLeft % 60;
+    document.getElementById('callTimer').textContent =
+        String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    document.getElementById('callTimer').style.color =
+        callSecondsLeft <= 30 ? 'var(--red)' : 'var(--yellow)';
+}
+
+// ==========================================
+// End Call
+// ==========================================
+async function endCall() {
+    if (!currentRoom) return;
+    socket.emit('end_call', { roomCode: currentRoom.roomCode });
+}
+
+async function handleCallEnd(msg) {
+    clearInterval(callTimerInterval);
+
+    // Stop TRTC
+    try { await trtc.stopLocalVideo(); } catch(e) {}
+    try { await trtc.stopLocalAudio(); } catch(e) {}
+    try { await trtc.exitRoom(); } catch(e) {}
+    trtc = TRTC.create();
+
+    document.getElementById('incallOverlay').classList.remove('active');
+    document.getElementById('callingOverlay').classList.remove('active');
+
+    // Restart camera preview
+    setTimeout(async () => {
+        try {
+            await trtc.startLocalVideo({ view: 'localVideoWrap' });
+            document.getElementById('camPlaceholder').style.display = 'none';
+        } catch(e) {}
+    }, 500);
+
+    resetAllBtns();
+    currentRoom = null;
+    showToast(msg);
+}
+
+// ==========================================
+// Dynamic House Buttons — โหลดจาก API
+// ==========================================
+let houseNumbers = []; // เก็บรายการบ้านทั้งหมดจาก API
+
+function renderHouseButtons(houses) {
+    houseNumbers = houses.map(h => h.house_number);
+    const container = document.getElementById('houseBtnContainer');
+    container.innerHTML = houses.map(h => `
+        <button class="house-btn" id="btn-${h.house_number}" onclick="ringHouse('${h.house_number}')">
+            <div class="house-num">${h.house_number}</div>
+            <div class="house-label">${h.house_name}</div>
+            <div class="house-status" id="status-${h.house_number}">● READY</div>
+        </button>
+    `).join('');
+}
+
+async function loadHouses() {
+    try {
+        const res = await fetch('/api/houses');
+        const result = await res.json();
+        if (result.status === 'success') renderHouseButtons(result.data);
+    } catch(e) { console.error('Load houses failed:', e); }
+}
+
+// ==========================================
+// Button Helpers
+// ==========================================
+function setBtnState(houseNumber, state, statusText) {
+    const btn = document.getElementById('btn-' + houseNumber);
+    const statusEl = document.getElementById('status-' + houseNumber);
+    if (!btn) return;
+    btn.className = 'house-btn ' + state;
+    if (statusEl) statusEl.textContent = '● ' + statusText;
+}
+
+function setAllBtnsDisabled(disabled, exceptHouse) {
+    houseNumbers.forEach(h => {
+        if (h !== exceptHouse) {
+            const btn = document.getElementById('btn-' + h);
+            if (btn) btn.disabled = disabled;
+        }
+    });
+}
+
+function resetAllBtns() {
+    houseNumbers.forEach(h => {
+        const btn = document.getElementById('btn-' + h);
+        if (!btn) return;
+        btn.className = 'house-btn';
+        btn.disabled = false;
+        const statusEl = document.getElementById('status-' + h);
+        if (statusEl) statusEl.textContent = '● READY';
+    });
+}
+
+// ==========================================
+// Toast
+// ==========================================
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3001);
+}
+
+// Confirmation modal helpers for voice-detected house number
+function showConfirmHouse(houseNumber) {
+    const modal = document.getElementById('confirmVoiceModal');
+    const numEl = document.getElementById('confirmHouseNumber');
+    if (numEl) numEl.textContent = houseNumber;
+    // store temporarily so confirm handler can read it
+    modal.dataset.houseNumber = houseNumber;
+    modal.classList.add('active');
+    updateVoiceStatus('ยืนยันหมายเลขบ้าน');
+}
+
+function hideConfirmHouse() {
+    const modal = document.getElementById('confirmVoiceModal');
+    if (!modal) return;
+    modal.classList.remove('active');
+    delete modal.dataset.houseNumber;
+}
+
+function confirmVoiceContact() {
+    const modal = document.getElementById('confirmVoiceModal');
+    const hn = modal && modal.dataset ? modal.dataset.houseNumber : null;
+    hideConfirmHouse();
+    if (hn) {
+        // proceed to ring the house
+        ringHouse(hn);
+    }
+}
+
+function cancelVoiceContact() {
+    hideConfirmHouse();
+    updateVoiceStatus('ยกเลิกการติดต่อ');
+    showToast('ยกเลิกหมายเลขบ้าน');
+}
+
+// ==========================================
+// Init: start camera preview
+// ==========================================
+window.addEventListener('DOMContentLoaded', async () => {
+    // โหลดรายการบ้านจาก API
+    await loadHouses();
+
+    // ขอ camera + mic permission ล่วงหน้าพร้อมกันเลย — ไม่ให้ popup ขัดตอนโทร
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        stream.getTracks().forEach(t => t.stop());
+        console.log('🎤📷 Camera+Mic permission granted in advance');
+    } catch(e) {
+        console.warn('Permission pre-request failed:', e.message);
+    }
+
+    try {
+        // Preview camera in background
+        await trtc.startLocalVideo({ view: 'localVideoWrap' });
+        document.getElementById('camPlaceholder').style.display = 'none';
+    } catch(e) {
+        console.warn('Camera not available for preview:', e.message);
+    }
+});
+</script>
+</body>
+</html>

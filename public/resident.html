@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สายเรียกเข้า</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg:       #e8e9eb;
+    --panel:    #f2f3f4;
+    --border:   #c4c7cc;
+    --accent:   #3a3f4a;
+    --green:    #2e7d4f;
+    --red:      #c0392b;
+    --yellow:   #ffc800;
+    --text:     #1a1d22;
+    --text-dim: #6b7280;
+    --glow-b:   0 1px 4px rgba(0,0,0,0.10);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Kanit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+
+
+/* ── IDLE SCREEN ── */
+#idleScreen {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+    padding: 40px;
+}
+
+.idle-icon {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px;
+}
+
+.idle-title {
+    font-size: 26px; font-weight: 700;
+    color: var(--text);
+}
+.idle-sub {
+    font-size: 15px; color: var(--text-dim);
+    font-weight: 300;
+}
+
+.house-selector {
+    display: flex; flex-direction: column; gap: 10px;
+    width: 100%; max-width: 300px;
+}
+.house-selector label {
+    font-size: 12px; color: var(--text-dim);
+    letter-spacing: 2px;
+}
+.house-selector select {
+    padding: 12px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Kanit', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    width: 100%;
+}
+.house-selector select:focus { border-color: var(--accent); }
+
+.btn-register {
+    padding: 14px;
+    background: var(--accent);
+    color: #ffffff;
+    border: none; border-radius: 10px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 16px; font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+.btn-register:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+.online-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(63,185,80,0.1);
+    border: 1px solid rgba(63,185,80,0.3);
+    border-radius: 20px;
+    padding: 8px 20px;
+    font-size: 13px; color: var(--green);
+    display: none;
+}
+.online-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── INCOMING CALL OVERLAY ── */
+#incomingOverlay {
+    position: fixed; inset: 0;
+    background: rgba(50,55,65,0.7);
+    backdrop-filter: blur(16px);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 0;
+}
+#incomingOverlay.active { display: flex; }
+
+.incoming-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 50px 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    width: 360px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+}
+
+.pulse-ring {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.05);
+    border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 44px;
+    position: relative;
+    margin: 0 auto 28px;
+    box-shadow: var(--glow-b);
+}
+.pulse-ring::before, .pulse-ring::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    animation: ripple 1.8s ease-out infinite;
+}
+.pulse-ring::after { animation-delay: 0.7s; }
+@keyframes ripple {
+    0%   { width: 100px; height: 100px; opacity: 0.35; }
+    100% { width: 200px; height: 200px; opacity: 0; }
+}
+
+.incoming-label {
+    font-size: 12px; color: var(--text-dim);
+    letter-spacing: 3px; margin-bottom: 8px;
+}
+.incoming-house {
+    font-size: 36px; font-weight: 800;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    margin-bottom: 6px;
+}
+.incoming-sub { font-size: 14px; color: var(--text-dim); margin-bottom: 16px; }
+
+/* ── VISITOR INFO BOX ── */
+.visitor-info {
+    display: none;
+    background: #f0f4f8;
+    border: 1px solid #d0d7e2;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+.visitor-info.show { display: block; }
+.visitor-info-title {
+    font-size: 11px; font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+}
+.visitor-info-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 8px; margin-bottom: 4px;
+}
+.visitor-info-label {
+    font-size: 12px; color: var(--text-dim);
+    flex-shrink: 0;
+}
+.visitor-info-val {
+    font-size: 13px; font-weight: 600;
+    color: var(--text);
+    text-align: right;
+}
+
+.call-actions {
+    display: flex; gap: 16px; justify-content: center;
+}
+
+.btn-accept {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: var(--green);
+    border: none; cursor: pointer;
+    font-size: 28px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.btn-accept:hover { filter: brightness(1.2); }
+
+.btn-reject {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: var(--red);
+    border: none; cursor: pointer;
+    font-size: 28px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+.btn-reject:hover { filter: brightness(1.2); }
+
+/* ── IN-CALL SCREEN ── */
+#incallScreen {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+#incallScreen.active { display: flex; }
+
+/* Card wrapper */
+.incall-card {
+    width: 100%;
+    max-width: 780px;
+    max-height: 90vh;
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+}
+
+.incall-header {
+    padding: 12px 20px;
+    background: #dde1e8;
+    border-bottom: 1px solid #c4c7cc;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+}
+.incall-left { display: flex; align-items: center; gap: 12px; }
+.live-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--red);
+    animation: blink 1s linear infinite;
+}
+.incall-info-text {
+    font-size: 13px; color: #6b7280;
+    font-family: 'Share Tech Mono', monospace;
+}
+.incall-house-text {
+    font-size: 15px; font-weight: 700;
+    color: #1a1d22;
+}
+.timer-display {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 20px; font-weight: 700;
+    color: #b07d00;
+    letter-spacing: 3px;
+}
+
+/* Video area — not fullscreen */
+.remote-video-container {
+    position: relative;
+    background: #111;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    width: 100%;
+}
+#remoteVideoEl {
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+.remote-placeholder {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px; color: var(--text-dim);
+}
+.remote-placeholder .big-icon { font-size: 60px; opacity: 0.2; }
+.remote-label {
+    position: absolute;
+    top: 20px; left: 24px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    padding: 6px 14px; border-radius: 6px;
+    font-size: 12px; color: rgba(255,255,255,0.5);
+    font-family: 'Share Tech Mono', monospace;
+}
+
+/* HUD overlay on video */
+.video-hud {
+    position: absolute;
+    bottom: 20px; right: 20px;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 12px; color: rgba(255,255,255,0.5);
+    font-family: 'Share Tech Mono', monospace;
+    display: flex; align-items: center; gap: 8px;
+}
+
+.incall-bar {
+    padding: 14px 24px;
+    background: #dde1e8;
+    border-top: 1px solid #c4c7cc;
+    display: flex; align-items: center; justify-content: center; gap: 20px;
+    flex-shrink: 0;
+}
+.mic-status {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(63,185,80,0.1);
+    border: 1px solid rgba(63,185,80,0.25);
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-size: 13px; color: var(--green);
+}
+.note-status {
+    font-size: 12px; color: var(--text-dim);
+    text-align: center;
+}
+
+.btn-hangup {
+    padding: 12px 36px;
+    background: #c0392b;
+    border: none;
+    border-radius: 50px;
+    color: #ffffff;
+    font-family: 'Kanit', sans-serif;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(192,57,43,0.25);
+}
+.btn-hangup:hover {
+    background: #a93226;
+    box-shadow: 0 4px 14px rgba(192,57,43,0.35);
+}
+
+/* Toast */
+.toast {
+    position: fixed; bottom: 30px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 14px; color: var(--text);
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+}
+.toast.show { opacity: 1; }
+
+</style>
+</head>
+<body>
+
+<!-- IDLE SCREEN -->
+<div id="idleScreen">
+    <div class="idle-icon" id="idleIcon">🔐</div>
+    <div>
+        <div class="idle-title" id="idleTitle">กำลังตรวจสอบสิทธิ์...</div>
+        
+    </div>
+
+    <!-- Error state (แสดงเมื่อ token ไม่ถูกต้อง) -->
+    <div id="errorBox" style="display:none; text-align:center; margin-top:8px;">
+        <div style="font-size:13px; color:#e53e3e; background:rgba(229,62,62,0.1);
+                    border:1px solid rgba(229,62,62,0.3); border-radius:10px;
+                    padding:14px 24px; max-width:320px;">
+            ❌ ลิ้งค์ไม่ถูกต้องหรือหมดอายุ<br>
+            <span style="font-size:12px; opacity:0.7;">กรุณาติดต่อนิติบุคคลเพื่อขอลิ้งค์ใหม่</span>
+        </div>
+    </div>
+
+    <!-- ปุ่มขอสิทธิ์ notification — แสดงหลัง verify token สำเร็จ -->
+    
+    <div class="online-badge" id="onlineBadge">
+        <div class="online-dot"></div>
+        <span id="onlineText">รอรับสาย...</span>
+    </div>
+</div>
+
+<!-- INCOMING CALL OVERLAY -->
+<div id="incomingOverlay">
+    <div class="incoming-card">
+        <div class="pulse-ring">📞</div>
+        <div class="incoming-label">INCOMING CALL</div>
+        <div class="incoming-house" id="incomingHouseNum">—</div>
+        <div class="incoming-sub" id="incomingSub">มีผู้ต้องการเข้าหมู่บ้าน</div>
+
+        <!-- ข้อมูลผู้มาติดต่อจากบัตรประชาชน -->
+        <div class="visitor-info" id="visitorInfoBox">
+            <div class="visitor-info-title">🪪 ข้อมูลผู้มาติดต่อ</div>
+            <div class="visitor-info-row">
+                <span class="visitor-info-label">ประเภทบัตร</span>
+                <span class="visitor-info-val" id="viCardType">—</span>
+            </div>
+            <div class="visitor-info-row">
+                <span class="visitor-info-label">ชื่อ (ไทย)</span>
+                <span class="visitor-info-val" id="viNameTh">—</span>
+            </div>
+            <div class="visitor-info-row">
+                <span class="visitor-info-label">ชื่อ (Eng)</span>
+                <span class="visitor-info-val" id="viNameEn">—</span>
+            </div>
+            <div class="visitor-info-row">
+                <span class="visitor-info-label">เลขบัตร</span>
+                <span class="visitor-info-val" id="viIdNumber">—</span>
+            </div>
+            <div class="visitor-info-row">
+                <span class="visitor-info-label">วันเกิด</span>
+                <span class="visitor-info-val" id="viBirthDate">—</span>
+            </div>
+        </div>
+
+        <div class="call-actions">
+            <button class="btn-accept" onclick="acceptCall()" title="รับสาย">📹</button>
+            <button class="btn-reject" onclick="rejectCall()" title="ปฏิเสธ">📵</button>
+        </div>
+    </div>
+</div>
+
+<!-- IN-CALL SCREEN -->
+<div id="incallScreen">
+  <div class="incall-card">
+    <div class="incall-header">
+        <div class="incall-left">
+            <div class="live-dot"></div>
+            <div>
+                <div class="incall-house-text" id="incallHouseText">บ้านเลขที่ —</div>
+                <div class="incall-info-text" id="incallRoomText">ROOM: —</div>
+            </div>
+        </div>
+        <div class="timer-display" id="resTimer">02:00</div>
+    </div>
+
+    <div class="remote-video-container">
+        <div id="remoteVideoEl" style="width:100%;height:100%;"></div>
+        <div class="remote-placeholder" id="remotePlaceholder">
+            <div class="big-icon">📷</div>
+            <div>รอสัญญาณวิดีโอจากกล้อง...</div>
+        </div>
+    </div>
+
+    <div class="incall-bar">
+        <div>
+            <div class="note-status"></div>
+        </div>
+        <button class="btn-hangup" onclick="hangUp()">วางสาย</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://web.sdk.qcloud.com/trtc/webrtc/v5/dist/trtc.js"></script>
+<script>
+// State
+// ==========================================
+const socket = io();
+let trtc = TRTC.create();
+let myHouseNumber = null;
+let pendingCall = null;   // { roomCode, roomId, userId, sdkAppId, userSig, houseNumber }
+let activeCall = null;
+let timerInterval = null;
+let timerSeconds = 120;
+
+// ==========================================
+// Auto Verify Token จาก URL
+// ==========================================
+async function verifyTokenAndRegister() {
+    const params = new URLSearchParams(window.location.search);
+    const house = params.get('house');
+    const token = params.get('token');
+    const roomCode = params.get('room'); // มาจาก push notification URL
+
+    // ไม่มี token ใน URL
+    if (!house || !token) {
+        showErrorState();
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/verify-token?house=${house}&token=${token}`);
+        const result = await res.json();
+
+        if (result.status !== 'success') {
+            showErrorState();
+            return;
+        }
+
+        // Token ถูกต้อง — register
+        myHouseNumber = result.data.houseNumber;
+        const houseName = result.data.houseName;
+
+        document.getElementById('idleIcon').textContent = '🏠';
+        document.getElementById('idleTitle').textContent = houseName;
+        
+
+        socket.emit('register_resident', { houseNumber: myHouseNumber });
+
+        // ขอ mic permission ล่วงหน้าทันที — ไม่ให้ browser popup ขัดตอนรับสาย
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                // ได้ permission แล้ว หยุด stream ทิ้ง (TRTC จะขอใหม่เองตอนจริง)
+                stream.getTracks().forEach(t => t.stop());
+                console.log('🎤 Mic permission granted in advance');
+            })
+            .catch(err => console.warn('🎤 Mic permission denied:', err.message));
+
+        const badge = document.getElementById('onlineBadge');
+        badge.style.display = 'flex';
+        document.getElementById('onlineText').textContent = `${houseName} · รอรับสาย...`;
+
+        // ถ้ามี ?room= ใน URL แสดงว่ามาจาก push notification → โหลด pending call ทันที
+        if (roomCode) {
+            await loadPendingCall(house, token, roomCode);
+        }
+
+    } catch (e) {
+        showErrorState();
+    }
+}
+
+// โหลด pending call จาก push notification URL
+async function loadPendingCall(house, token, roomCode) {
+    try {
+        const res = await fetch(`/api/pending-call?house=${house}&token=${token}&room=${roomCode}`);
+        const result = await res.json();
+        if (result.status === 'success') {
+            // แสดง incoming call overlay เลย
+            const data = result.data;
+            pendingCall = data;
+            document.getElementById('incomingHouseNum').textContent = `บ้าน ${data.houseNumber}`;
+            document.getElementById('incomingSub').textContent = 'มีผู้ต้องการเข้าหมู่บ้าน กรุณายืนยันตัวตน';
+            showVisitorInfo(data.visitorInfo || null);
+            document.getElementById('incomingOverlay').classList.add('active');
+            // เล่นเสียงแจ้งเตือน
+            try {
+                const ctx = new AudioContext();
+                function beep(freq, duration, delay) {
+                    setTimeout(() => {
+                        const o = ctx.createOscillator(), g = ctx.createGain();
+                        o.connect(g); g.connect(ctx.destination);
+                        o.frequency.value = freq; o.type = 'sine';
+                        g.gain.setValueAtTime(0.3, ctx.currentTime);
+                        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                        o.start(ctx.currentTime); o.stop(ctx.currentTime + duration);
+                    }, delay);
+                }
+                beep(880, 0.2, 0); beep(880, 0.2, 300); beep(880, 0.2, 600);
+            } catch(e) {}
+        } else {
+            // room หมดอายุแล้ว (ไรเดอร์กดยกเลิกไปแล้ว)
+            showToast('⚠️ สายหมดอายุแล้ว ไรเดอร์อาจยกเลิกไปแล้ว');
+        }
+    } catch(e) {
+        console.error('loadPendingCall error:', e);
+    }
+}
+
+function showErrorState() {
+    document.getElementById('idleIcon').textContent = '🚫';
+    document.getElementById('idleTitle').textContent = 'ไม่มีสิทธิ์เข้าถึง';
+    document.getElementById('idleSub').textContent = 'กรุณาติดต่อนิติบุคคล';
+    document.getElementById('errorBox').style.display = 'block';
+}
+
+// รัน verify ทันทีที่เปิดหน้า
+window.addEventListener('DOMContentLoaded', verifyTokenAndRegister);
+
+// ==========================================
+// Visitor Info
+// ==========================================
+function showVisitorInfo(visitorInfo) {
+    const box = document.getElementById('visitorInfoBox');
+    if (!visitorInfo) { box.classList.remove('show'); return; }
+
+    // รองรับทั้ง camelCase (socket) และ snake_case (DB)
+    const cardType  = visitorInfo.cardType  || visitorInfo.card_type  || '';
+    const nameTh    = visitorInfo.nameTh    || visitorInfo.name_th    || '';
+    const nameEn    = visitorInfo.nameEn    || visitorInfo.name_en    || '';
+    const idNumber  = visitorInfo.idNumber  || visitorInfo.id_number  || '';
+    const birthDate = visitorInfo.birthDate || visitorInfo.birth_date || '';
+
+    if (!nameTh && !nameEn && !idNumber) { box.classList.remove('show'); return; }
+
+    document.getElementById('viCardType').textContent  = cardType  || '—';
+    document.getElementById('viNameTh').textContent    = nameTh    || '—';
+    document.getElementById('viNameEn').textContent    = nameEn    || '—';
+    document.getElementById('viIdNumber').textContent  = idNumber  || '—';
+    document.getElementById('viBirthDate').textContent = birthDate || '—';
+    box.classList.add('show');
+}
+
+// ==========================================
+// Incoming Call
+// ==========================================
+socket.on('incoming_call', (data) => {
+    pendingCall = data;
+    document.getElementById('incomingHouseNum').textContent = `บ้าน ${data.houseNumber}`;
+    document.getElementById('incomingSub').textContent = 'มีผู้ต้องการเข้าหมู่บ้าน กรุณายืนยันตัวตน';
+    showVisitorInfo(data.visitorInfo || null);
+    document.getElementById('incomingOverlay').classList.add('active');
+
+    // Play notification sound
+    try {
+        const ctx = new AudioContext();
+        function beep(freq, duration, delay) {
+            setTimeout(() => {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                o.frequency.value = freq;
+                o.type = 'sine';
+                g.gain.setValueAtTime(0.3, ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                o.start(ctx.currentTime);
+                o.stop(ctx.currentTime + duration);
+            }, delay);
+        }
+        beep(880, 0.2, 0);
+        beep(880, 0.2, 300);
+        beep(880, 0.2, 600);
+    } catch(e) {}
+});
+
+// ==========================================
+// Accept
+// ==========================================
+async function acceptCall() {
+    if (!pendingCall) return;
+    document.getElementById('incomingOverlay').classList.remove('active');
+    activeCall = pendingCall;
+    pendingCall = null;
+
+    // บันทึก startAt ณ ขณะที่กดรับสาย แล้วส่งไปให้ server ใช้เป็น timestamp กลาง
+    const startAt = Date.now();
+
+    socket.emit('accept_call', {
+        roomCode: activeCall.roomCode,
+        houseNumber: activeCall.houseNumber,
+        startAt
+    });
+
+    showIncallScreen();
+    startTimerAt(startAt); // เริ่ม timer ทันที ไม่รอ round-trip
+    enterRoomAsResident();
+}
+
+async function enterRoomAsResident() {
+    const { sdkAppId, userId, userSig, roomId, roomCode, houseNumber } = activeCall;
+
+    registerTRTCEvents();
+
+    await trtc.enterRoom({
+        roomId: parseInt(roomId),
+        sdkAppId: parseInt(sdkAppId),
+        userId,
+        userSig
+    });
+
+    // startLocalAudio ไม่ต้อง await — mic permission ได้ขอไปล่วงหน้าแล้ว
+    trtc.startLocalAudio().catch(e => console.warn('No mic:', e.message));
+
+    document.getElementById('incallHouseText').textContent = `บ้านเลขที่ ${houseNumber}`;
+    document.getElementById('incallRoomText').textContent = 'ROOM: ' + roomCode;
+    // timer จะเริ่มใน call_accepted handler เมื่อได้ startAt จาก server
+}
+
+function registerTRTCEvents() {
+    // Receive camera video (full screen)
+    trtc.on(TRTC.EVENT.REMOTE_VIDEO_AVAILABLE, ({ userId, streamType }) => {
+        document.getElementById('remotePlaceholder').style.display = 'none';
+        const st = streamType ?? (TRTC.TYPE ? TRTC.TYPE.STREAM_TYPE_MAIN : 'main');
+        trtc.startRemoteVideo({ userId, view: 'remoteVideoEl', streamType: st });
+    });
+
+    trtc.on(TRTC.EVENT.REMOTE_VIDEO_UNAVAILABLE, () => {
+        document.getElementById('remotePlaceholder').style.display = 'flex';
+    });
+
+    trtc.on(TRTC.EVENT.REMOTE_AUDIO_AVAILABLE, ({ userId }) => {
+        trtc.startRemoteAudio({ userId });
+    });
+}
+
+// ==========================================
+// Reject
+// ==========================================
+function rejectCall() {
+    if (!pendingCall) return;
+    socket.emit('reject_call', {
+        roomCode: pendingCall.roomCode,
+        houseNumber: pendingCall.houseNumber
+    });
+    document.getElementById('incomingOverlay').classList.remove('active');
+    pendingCall = null;
+    showToast('ปฏิเสธสายแล้ว');
+}
+
+// ==========================================
+// Hang Up
+// ==========================================
+async function hangUp() {
+    if (!activeCall) return;
+    socket.emit('end_call', { roomCode: activeCall.roomCode });
+}
+
+// ── Server ยืนยัน call เริ่ม (timer เริ่มไปแล้วตอนกดรับ ไม่ต้องเริ่มใหม่) ──
+socket.on('call_accepted', ({ roomCode, startAt }) => {
+    if (!activeCall || activeCall.roomCode !== roomCode) return;
+
+    if (!timerInterval) startTimerAt(startAt);
+});
+
+// ── Call ended from server ──
+socket.on('call_ended', async ({ reason }) => {
+    const msgs = {
+        rejected: 'ปฏิเสธสาย',
+        hangup: 'วางสายแล้ว',
+        timeout: 'วางสายอัตโนมัติ'
+    };
+    await cleanupCall();
+    showToast(msgs[reason] || 'สายหลุด');
+});
+
+async function cleanupCall() {
+    clearInterval(timerInterval);
+
+    try { await trtc.stopLocalAudio(); } catch(e) {}
+    try { await trtc.exitRoom(); } catch(e) {}
+    trtc = TRTC.create();
+
+    document.getElementById('incallScreen').classList.remove('active');
+    document.getElementById('incomingOverlay').classList.remove('active');
+    document.getElementById('remotePlaceholder').style.display = 'flex';
+
+    activeCall = null;
+    pendingCall = null;
+    timerSeconds = 120;
+}
+
+// ==========================================
+// UI Helpers
+// ==========================================
+function showIncallScreen() {
+    document.getElementById('incallScreen').classList.add('active');
+}
+
+function startTimerAt(startAt) {
+    clearInterval(timerInterval);
+    const CALL_DURATION = 120; // วินาที — ต้องตรงกับ AUTO_CLOSE_MS ใน server
+    function tick() {
+        const elapsed = Math.floor((Date.now() - startAt) / 1000);
+        timerSeconds = Math.max(0, CALL_DURATION - elapsed);
+        updateTimerDisplay();
+        if (timerSeconds <= 0) clearInterval(timerInterval);
+    }
+    tick();
+    timerInterval = setInterval(tick, 500); // อัปเดตทุก 500ms เพื่อความแม่นยำ
+}
+
+function updateTimerDisplay() {
+    const m = Math.floor(timerSeconds / 60);
+    const s = timerSeconds % 60;
+    const el = document.getElementById('resTimer');
+    el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    el.style.color = timerSeconds <= 30 ? 'var(--red)' : 'var(--yellow)';
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3001);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exit Terminal</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700;800&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #e8e9eb;
+            --panel: #f2f3f4;
+            --border: #c4c7cc;
+            --accent: #3a3f4a;
+            --accent-strong: #2b62df;
+            --green: #2e7d4f;
+            --yellow: #b07d00;
+            --text: #1a1d22;
+            --text-dim: #6b7280;
+            --surface: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(180deg, #f5f6f8 0%, #e7e8eb 100%);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 840px;
+            margin: 0 auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--accent);
+        }
+
+        .subtitle {
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 24px 60px rgba(74, 85, 104, 0.08);
+        }
+
+        .preview {
+            position: relative;
+            border-radius: 22px;
+            overflow: hidden;
+            background: #000;
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            aspect-ratio: 16 / 9;
+        }
+
+        .preview video,
+        .preview canvas,
+        .preview img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .preview canvas.hidden,
+        .preview img.hidden {
+            display: none;
+        }
+
+        .preview .overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            border: 2px dashed rgba(255, 255, 255, 0.55);
+            border-radius: 22px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 999px;
+            padding: 14px 24px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-secondary {
+            background: #f8fafc;
+            color: var(--accent);
+            border: 1px solid var(--border);
+        }
+
+        .btn-capture-main {
+            flex: 1;
+            min-width: 180px;
+            padding: 14px 22px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Kanit', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 10px 30px rgba(69, 97, 230, 0.18);
+        }
+
+        .btn-capture-main:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn-primary {
+            background: var(--accent-strong);
+            color: #fff;
+            box-shadow: 0 10px 30px rgba(69, 97, 230, 0.18);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 28px 36px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 24px;
+            color: var(--text);
+            box-shadow: 0 20px 60px rgba(74, 85, 104, 0.15);
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 720px) {
+            .container {
+                padding: 18px;
+            }
+
+            .preview {
+                max-width: 100%;
+                aspect-ratio: 16 / 9;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="title">Exit Terminal</div>
+            <div class="subtitle">ยื่นบัตรหน้ากที่หน้ากล้อง และกดถ่ายภาพ</div>
+        </header>
+
+        <div class="card">
+            <div class="preview">
+                <video id="exitVideo" autoplay playsinline muted></video>
+                <img id="exitStream" class="hidden" alt="กล้องสด">
+                <canvas id="exitCanvas" class="hidden"></canvas>
+                <div class="overlay"></div>
+            </div>
+            <div class="controls">
+                <button class="btn btn-capture-main" id="captureButton" onclick="captureExitCard()">ถ่ายภาพ</button>
+                <button class="btn btn-secondary hidden" id="retryButton" onclick="retryExitScan()">ถ่ายใหม่</button>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="exitToast"></div>
+    <script>
+        const video = document.getElementById('exitVideo');
+        const canvas = document.getElementById('exitCanvas');
+        const streamImg = document.getElementById('exitStream');
+        const retryButton = document.getElementById('retryButton');
+        const captureButton = document.getElementById('captureButton');
+        let exitStream = null;
+
+        // ── VIGI mode: live preview แบบ MJPEG stream (ffmpeg ค้างตัวเดียวฝั่ง server) ──
+        const USE_VIGI = true; // เปลี่ยนเป็น false เพื่อกลับไปใช้ webcam
+
+        let toastTimer = null;
+        function showToast(message, duration = 5000) {
+            const toast = document.getElementById('exitToast');
+            if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+            toast.textContent = message;
+            toast.classList.add('show');
+            toastTimer = setTimeout(() => { toast.classList.remove('show'); toastTimer = null; }, duration);
+        }
+
+        async function startPreview() {
+            if (USE_VIGI) {
+                await startVigiPreview();
+            } else {
+                try {
+                    exitStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: 1280, height: 720 }, audio: false });
+                    video.srcObject = exitStream;
+                    showToast('กด "ถ่ายภาพ" เพื่อสแกนบัตร', 4500);
+                    captureButton.disabled = false;
+                } catch (err) {
+                    showToast('เปิดกล้องไม่ได้: ' + err.message, 6000);
+                    retryButton.classList.remove('hidden');
+                }
+            }
+        }
+
+        function startVigiPreview() {
+            video.style.display = 'none';
+            canvas.classList.add('hidden');
+            // cache-bust กัน browser ใช้ connection เก่าที่ค้าง
+            streamImg.src = '/api/vigi-stream?t=' + Date.now();
+            streamImg.classList.remove('hidden');
+            streamImg.onerror = () => {
+                console.warn('VIGI stream error — กล้องอาจเต็มหรือต่อไม่ได้');
+                showToast('เชื่อมต่อกล้องไม่ได้ ลองใหม่อีกครั้ง', 5000);
+            };
+            showToast('กด "ถ่ายภาพ" เพื่อสแกนบัตร', 4500);
+            captureButton.disabled = false;
+        }
+
+        function stopVigiStream() {
+            if (streamImg) {
+                streamImg.removeAttribute('src'); // ปิด connection → server kill ffmpeg
+                streamImg.classList.add('hidden');
+            }
+        }
+
+        // ดึง snapshot คมชัด 1 frame จาก server (ใช้ตอนกดถ่ายเพื่อส่ง OCR)
+        async function grabVigiSnapshotToCanvas() {
+            const res = await fetch('/api/vigi-snapshot?t=' + Date.now());
+            if (!res.ok) throw new Error('snapshot failed');
+            const blob = await res.blob();
+            const url  = URL.createObjectURL(blob);
+            const im   = new Image();
+            await new Promise((ok, no) => { im.onload = ok; im.onerror = no; im.src = url; });
+            canvas.width  = im.width;
+            canvas.height = im.height;
+            canvas.getContext('2d').drawImage(im, 0, 0);
+            URL.revokeObjectURL(url);
+            canvas.classList.remove('hidden');
+        }
+
+        function stopPreview() {
+            stopVigiStream();
+            if (exitStream) { exitStream.getTracks().forEach(t => t.stop()); exitStream = null; }
+            if (captureButton) captureButton.disabled = false;
+        }
+
+        async function captureExitCard() {
+            captureButton.disabled = true;
+            retryButton.classList.add('hidden');
+            showToast('กำลังถ่ายภาพบัตร...', 3500);
+
+            try {
+                if (USE_VIGI) {
+                    // หยุด stream แล้วดึง snapshot คมชัดมาวาดบน canvas
+                    stopVigiStream();
+                    await grabVigiSnapshotToCanvas();
+                } else {
+                    if (!exitStream) { captureButton.disabled = false; return; }
+                    const width  = video.videoWidth  || 1280;
+                    const height = video.videoHeight || 720;
+                    canvas.width  = width;
+                    canvas.height = height;
+                    canvas.getContext('2d').drawImage(video, 0, 0, width, height);
+                    exitStream.getTracks().forEach(t => t.stop());
+                    exitStream = null;
+                    canvas.classList.remove('hidden');
+                }
+            } catch(e) {
+                console.error('capture error:', e);
+                showFailure('ถ่ายภาพล้มเหลว');
+                return;
+            }
+            processExitImage();
+        }
+
+        async function processExitImage() {
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    showFailure('ถ่ายภาพล้มเหลว');
+                    return;
+                }
+                try {
+                    const form = new FormData();
+                    form.append('photo', blob, 'exit-card.jpg');
+                    showToast('กำลังอ่านเลขบัตร...', 2500);
+                    const res = await fetch('/api/ocr', { method: 'POST', body: form });
+                    const result = await res.json();
+                    if (result.status !== 'success' || !result.data || !result.data.idNumber) {
+                        showFailure('ไม่พบเลขบัตรชัดเจน');
+                        return;
+                    }
+                    const idNumber = result.data.idNumber;
+                    showToast('ตรวจสอบฐานข้อมูล...', 2500);
+                    const completeRes = await fetch('/api/exit-scan', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idNumber })
+                    });
+                    const completeJson = await completeRes.json();
+                    if (completeJson.status === 'success') {
+                        retryButton.classList.add('hidden');
+                        showToast(`ขอบคุณค่ะ เดินทางปลอดภัย\n`, 3000);
+                        resetAfterSuccess();
+                    } else {
+                        showFailure(completeJson.message || 'ไม่พบรายการ pending');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showFailure('เกิดข้อผิดพลาดขณะสแกน');
+                }
+               },'image/jpeg', 0.9);
+        }
+
+        function resetAfterSuccess() {
+            setTimeout(() => {
+                canvas.classList.add('hidden');
+                if (!USE_VIGI) { canvas.classList.add('hidden'); }
+                if (captureButton) captureButton.disabled = false;
+                startPreview();
+            }, 3000);
+        }
+
+        function showFailure(message) {
+            retryButton.classList.remove('hidden');
+            captureButton.classList.add('hidden');
+            captureButton.disabled = false;
+            showToast(message, 3000);
+        }
+
+        function retryExitScan() {
+            retryButton.classList.add('hidden');
+            captureButton.classList.remove('hidden');
+            captureButton.disabled = false;
+            canvas.classList.add('hidden');
+            showToast('กำลังเปิดกล้องใหม่...', 2000);
+            startPreview();
+        }
+
+        window.addEventListener('DOMContentLoaded', startPreview);
+        window.addEventListener('beforeunload', stopPreview);
+    </script>
+</body>
+
+</html>

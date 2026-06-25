@@ -1,0 +1,625 @@
+/* style.css - Malaewja Meeting App */
+
+:root {
+    --blue: #2563eb;
+    --blue-hover: #1d4ed8;
+    --blue-light: #dbeafe;
+    --green: #16a34a;
+    --green-hover: #15803d;
+    --red: #dc2626;
+    --red-hover: #b91c1c;
+    --bg: #f1f5f9;
+    --dark: #0f172a;
+    --dark-2: #1e293b;
+    --gray: #64748b;
+    --gray-light: #e2e8f0;
+    --white: #ffffff;
+    --shadow: 0 8px 30px rgba(0,0,0,0.1);
+    --radius: 14px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Sarabun', sans-serif;
+    background: var(--bg);
+    color: var(--dark);
+    min-height: 100vh;
+}
+
+/* ==================== LOGO ==================== */
+.logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    color: var(--blue);
+    text-align: center;
+    padding: 20px 0 10px;
+    letter-spacing: 1px;
+}
+
+/* ==================== AUTH CARDS ==================== */
+.container {
+    width: 100%;
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+}
+
+.auth-section {
+    display: none;
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 36px 32px;
+    margin-top: 10px;
+}
+
+#loginSection { display: block; }
+
+h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 22px;
+    color: var(--dark);
+}
+
+input {
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    border: 1.5px solid var(--gray-light);
+    border-radius: 9px;
+    font-size: 15px;
+    font-family: 'Sarabun', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+    background: #fafafa;
+}
+
+input:focus { border-color: var(--blue); background: var(--white); }
+
+button {
+    width: 100%;
+    padding: 13px;
+    background: var(--blue);
+    color: var(--white);
+    border: none;
+    border-radius: 9px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'Sarabun', sans-serif;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+button:hover:not(:disabled) { background: var(--blue-hover); }
+
+.btn-disabled {
+    background: #cbd5e1 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed !important;
+}
+
+.toggle-link {
+    display: block;
+    margin-top: 18px;
+    font-size: 14px;
+    color: var(--gray);
+    text-align: center;
+    cursor: pointer;
+}
+
+.toggle-link b { color: var(--blue); }
+
+.field-error {
+    font-size: 12px;
+    color: var(--red);
+    margin-top: -10px;
+    margin-bottom: 10px;
+    display: none;
+}
+
+.code-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.code-row input { margin-bottom: 0; flex: 1; }
+
+.btn-get-code {
+    width: auto;
+    padding: 0 16px;
+    font-size: 13px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.timer-text {
+    font-size: 12px;
+    color: var(--red);
+    margin-bottom: 10px;
+    display: none;
+}
+
+.verify-status {
+    font-size: 13px;
+    margin-bottom: 12px;
+    display: none;
+}
+
+/* ==================== MEETING AREA WRAPPER ==================== */
+#meetingArea {
+    width: 100vw;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 100;
+}
+
+/* ==================== HOME SCREEN ==================== */
+.home-screen {
+    width: 100%;
+    height: 100%;
+    background: var(--dark);
+    display: flex;
+    flex-direction: column;
+}
+
+.home-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 28px;
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.user-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255,255,255,0.85);
+    font-size: 15px;
+}
+
+.user-icon {
+    font-size: 20px;
+}
+
+.btn-logout {
+    width: auto;
+    padding: 8px 18px;
+    background: rgba(220,38,38,0.15);
+    color: #f87171;
+    border: 1px solid rgba(220,38,38,0.3);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-logout:hover { background: rgba(220,38,38,0.28); }
+
+.home-hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px 20px;
+    text-align: center;
+}
+
+.hero-title {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(42px, 8vw, 72px);
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -1px;
+    line-height: 1;
+    margin-bottom: 14px;
+}
+
+.hero-sub {
+    color: rgba(255,255,255,0.45);
+    font-size: 16px;
+}
+
+.home-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: 30px 28px 50px;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.btn-new-meeting {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 18px;
+    background: var(--blue);
+    color: var(--white);
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Sarabun', sans-serif;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.2s;
+    box-shadow: 0 4px 20px rgba(37,99,235,0.4);
+}
+
+.btn-new-meeting:hover {
+    background: var(--blue-hover);
+    transform: translateY(-2px);
+}
+
+.btn-icon { font-size: 22px; }
+
+.divider-text {
+    color: rgba(255,255,255,0.3);
+    font-size: 14px;
+    margin: 20px 0;
+    width: 100%;
+    text-align: center;
+    position: relative;
+}
+
+.divider-text::before, .divider-text::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: calc(50% - 25px);
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+}
+.divider-text::before { left: 0; }
+.divider-text::after { right: 0; }
+
+.join-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.input-join {
+    flex: 1;
+    padding: 14px 16px;
+    background: #1e293b;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    color: #ffffff;
+    caret-color: #ffffff;
+    font-size: 15px;
+    font-family: 'Sarabun', sans-serif;
+    margin-bottom: 0;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.input-join::placeholder { color: rgba(255,255,255,0.35); }
+.input-join:focus {
+    border-color: var(--blue);
+    background: #1e293b !important;
+    color: #ffffff;
+}
+
+.input-join:-webkit-autofill,
+.input-join:-webkit-autofill:hover,
+.input-join:-webkit-autofill:focus {
+    -webkit-text-fill-color: #ffffff !important;
+    -webkit-box-shadow: 0 0 0px 1000px #1e293b inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+.btn-join {
+    width: auto;
+    padding: 0 22px;
+    background: rgba(255,255,255,0.1);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    color: var(--white);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.btn-join:hover { background: rgba(255,255,255,0.18); }
+
+/* ==================== IN-MEETING SCREEN ==================== */
+.in-meeting-screen {
+    width: 100%;
+    height: 100%;
+    background: #0a0a0f;
+    flex-direction: column;
+}
+
+.meeting-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    flex-shrink: 0;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.meeting-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 16px;
+    color: var(--white);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.room-info-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 6px 14px;
+    border-radius: 20px;
+    flex-wrap: nowrap;
+}
+
+.room-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    white-space: nowrap;
+}
+
+.room-code-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    color: #60a5fa;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.btn-copy-small {
+    width: auto;
+    padding: 3px 8px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    color: rgba(255,255,255,0.6);
+    transition: background 0.2s;
+}
+
+.btn-copy-small:hover { background: rgba(255,255,255,0.1); }
+
+.btn-leave {
+    width: auto;
+    padding: 8px 18px;
+    background: rgba(220,38,38,0.15);
+    color: #f87171;
+    border: 1px solid rgba(220,38,38,0.3);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-leave:hover { background: rgba(220,38,38,0.3); }
+
+/* ==================== VIDEO GRID ==================== */
+.video-grid {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px;
+    overflow: auto;
+    align-content: flex-start;
+}
+
+/* ขนาดของแต่ละ video-box ตามจำนวนคนในห้อง */
+/* 1 คน: กว้างสูงสุด 640px จัดกึ่งกลาง */
+.video-grid[data-count="1"] {
+    justify-content: center;
+    align-content: center;
+}
+.video-grid[data-count="1"] .video-box {
+    width: min(640px, 100%);
+}
+
+/* 2 คน: แบ่งครึ่ง */
+.video-grid[data-count="2"] .video-box {
+    width: calc(50% - 5px);
+}
+
+/* 3-4 คน: 2x2 grid */
+.video-grid[data-count="3"] .video-box,
+.video-grid[data-count="4"] .video-box {
+    width: calc(50% - 5px);
+}
+
+/* 5+ คน: 3 คอลัมน์ */
+.video-grid[data-count="5"] .video-box,
+.video-grid[data-count="6"] .video-box {
+    width: calc(33.333% - 7px);
+}
+
+/* default สำหรับ 7+ คน */
+.video-grid .video-box {
+    width: calc(33.333% - 7px);
+    flex-shrink: 0;
+}
+
+.remote-video-grid {
+    display: contents;
+}
+
+/* Local video box PiP เมื่อไม่มีกล้อง */
+.video-box.local-pip {
+    position: fixed !important;
+    bottom: 80px;
+    right: 14px;
+    width: 180px !important;
+    height: 135px !important;
+    z-index: 50;
+    border: 2px solid rgba(255,255,255,0.2);
+    aspect-ratio: auto !important;
+}
+
+.video-box.local-pip .video-label {
+    font-size: 11px;
+    padding: 2px 8px;
+}
+
+@media (max-width: 768px) {
+    .video-grid[data-count="2"] .video-box,
+    .video-grid[data-count="3"] .video-box,
+    .video-grid[data-count="4"] .video-box {
+        width: calc(50% - 5px);
+    }
+    .video-grid[data-count="5"] .video-box,
+    .video-grid[data-count="6"] .video-box,
+    .video-grid .video-box {
+        width: calc(50% - 5px);
+    }
+
+    .video-box.local-pip {
+        width: 120px !important;
+        height: 90px !important;
+        bottom: 70px;
+        right: 10px;
+    }
+}
+
+@media (max-width: 600px) {
+    .video-grid[data-count="1"] .video-box,
+    .video-grid[data-count="2"] .video-box,
+    .video-grid[data-count="3"] .video-box,
+    .video-grid[data-count="4"] .video-box,
+    .video-grid[data-count="5"] .video-box,
+    .video-grid[data-count="6"] .video-box,
+    .video-grid .video-box {
+        width: 100%;
+    }
+
+    .video-box.local-pip {
+        width: 100px !important;
+        height: 75px !important;
+        bottom: 65px;
+        right: 8px;
+    }
+}
+
+
+.video-box {
+    background: #111;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+}
+
+.video-feed {
+    width: 100%;
+    height: 100%;
+}
+
+.video-feed video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.video-label {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    background: rgba(0,0,0,0.55);
+    color: rgba(255,255,255,0.85);
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    z-index: 10;
+    backdrop-filter: blur(4px);
+}
+
+.video-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #111;
+    color: rgba(255,255,255,0.3);
+    z-index: 5;
+}
+
+.video-placeholder span { font-size: 40px; opacity: 0.4; }
+.video-placeholder p { font-size: 13px; font-weight: 500; }
+
+/* ==================== CONTROL BAR ==================== */
+.control-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: rgba(0,0,0,0.4);
+    flex-shrink: 0;
+}
+
+.ctrl-btn {
+    width: auto;
+    padding: 11px 22px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 50px;
+    color: var(--white);
+    font-size: 14px;
+    font-family: 'Sarabun', sans-serif;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.ctrl-btn:hover { background: rgba(255,255,255,0.18); }
+
+.ctrl-btn.ctrl-off {
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.4);
+    border-color: rgba(255,255,255,0.08);
+}
+
+.ctrl-danger {
+    background: rgba(220,38,38,0.2) !important;
+    border-color: rgba(220,38,38,0.35) !important;
+    color: #f87171 !important;
+}
+
+.ctrl-danger:hover { background: rgba(220,38,38,0.35) !important; }
+
+/* ===================================================
+   เพิ่มสถานะปุ่มเมื่อสั่งปิดการใช้งาน (Mic / Cam Muted)
+   =================================================== */
+.ctrl-btn.ctrl-off {
+    background-color: var(--red) !important; /* เปลี่ยนเป็นสีแดงของระบบ */
+    color: var(--white) !important;
+    border-color: var(--red) !important;
+}
+
+.ctrl-btn.ctrl-off:hover {
+    background-color: var(--red-hover) !important; /* สีแดงเข้มขึ้นเวลาเอาเมาส์ไปชี้ */
+}

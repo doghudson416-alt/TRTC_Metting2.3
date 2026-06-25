@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: village_guard_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secretpassword123
+      POSTGRES_DB: village_guard
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: village_guard_app
+    restart: always
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
