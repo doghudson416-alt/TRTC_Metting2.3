@@ -256,23 +256,43 @@
             }
         }
 
+        // Preview แบบ snapshot polling — ดึงเฟรมล่าสุดทีละใบ ไม่ใช้ MJPEG stream
+        // แก้ดีเลย์สะสม + จอดำ: แต่ละรอบเป็น request อิสระ ได้เฟรมสดเสมอ
+        let vigiLoopActive = false;
+        let vigiPollTimer  = null;
+        const VIGI_POLL_MS = 120;
+
         function startVigiPreview() {
             video.style.display = 'none';
             canvas.classList.add('hidden');
-            // cache-bust กัน browser ใช้ connection เก่าที่ค้าง
-            streamImg.src = '/api/vigi-stream?t=' + Date.now();
             streamImg.classList.remove('hidden');
-            streamImg.onerror = () => {
-                console.warn('VIGI stream error — กล้องอาจเต็มหรือต่อไม่ได้');
-                showToast('เชื่อมต่อกล้องไม่ได้ ลองใหม่อีกครั้ง', 5000);
-            };
+            vigiLoopActive = true;
+
+            function pollFrame() {
+                if (!vigiLoopActive) return;
+                const img = new Image();
+                img.onload = () => {
+                    if (!vigiLoopActive) return;
+                    streamImg.src = img.src;        // สลับเมื่อโหลดเสร็จ → ไม่กระพริบ
+                    vigiPollTimer = setTimeout(pollFrame, VIGI_POLL_MS);
+                };
+                img.onerror = () => {
+                    if (!vigiLoopActive) return;
+                    vigiPollTimer = setTimeout(pollFrame, 400);
+                };
+                img.src = '/api/vigi-frame?t=' + Date.now();
+            }
+
+            pollFrame();
             showToast('กด "ถ่ายภาพ" เพื่อสแกนบัตร', 4500);
             captureButton.disabled = false;
         }
 
         function stopVigiStream() {
+            vigiLoopActive = false;
+            if (vigiPollTimer) { clearTimeout(vigiPollTimer); vigiPollTimer = null; }
             if (streamImg) {
-                streamImg.removeAttribute('src'); // ปิด connection → server kill ffmpeg
+                streamImg.removeAttribute('src');
                 streamImg.classList.add('hidden');
             }
         }
@@ -285,9 +305,12 @@
             const url  = URL.createObjectURL(blob);
             const im   = new Image();
             await new Promise((ok, no) => { im.onload = ok; im.onerror = no; im.src = url; });
-            canvas.width  = im.width;
-            canvas.height = im.height;
-            canvas.getContext('2d').drawImage(im, 0, 0);
+            // จำกัดด้านยาวสุดไม่เกิน 2000px ก่อนส่ง OCR → upload เล็กลง ประมวลผลเร็วขึ้น
+            const MAX = 2000;
+            const scale = Math.min(1, MAX / Math.max(im.width, im.height));
+            canvas.width  = Math.round(im.width * scale);
+            canvas.height = Math.round(im.height * scale);
+            canvas.getContext('2d').drawImage(im, 0, 0, canvas.width, canvas.height);
             URL.revokeObjectURL(url);
             canvas.classList.remove('hidden');
         }

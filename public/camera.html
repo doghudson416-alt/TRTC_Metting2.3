@@ -926,8 +926,12 @@ async function ringHouse(houseNumber) {
 // ==========================================
 window.useVigiCamera = true; // เปลี่ยนเป็น false เพื่อกลับไปใช้ webcam
 
-let vigiLoopActive  = false;
-let vigiRestartTimer = null;
+let vigiLoopActive = false;
+let vigiPollTimer  = null;
+
+// Preview แบบ snapshot polling — ดึงเฟรมล่าสุดทีละใบ ไม่ใช้ MJPEG stream
+// แก้ดีเลย์สะสม + จอดำ: แต่ละรอบเป็น request อิสระ ได้เฟรมสดเสมอ ไม่มี buffer ค้าง
+const VIGI_POLL_MS = 120; // ~8fps ก็พอสำหรับเล็งบัตร
 
 function startVigiPreview() {
     const video   = document.getElementById('ocrVideo');
@@ -939,19 +943,27 @@ function startVigiPreview() {
     vigiImg.style.display = 'block';
     vigiLoopActive = true;
 
-    function connectStream() {
+    function pollFrame() {
         if (!vigiLoopActive) return;
-        vigiImg.src = '/api/vigi-stream?' + Date.now();
-        // restart ทุก 30 วินาที เพื่อ flush memory ที่ browser สะสมจาก MJPEG
-        vigiRestartTimer = setTimeout(connectStream, 30000);
+        const img = new Image();
+        img.onload = () => {
+            if (!vigiLoopActive) return;
+            vigiImg.src = img.src;          // สลับเฉพาะเมื่อโหลดเสร็จ → ไม่กระพริบ
+            vigiPollTimer = setTimeout(pollFrame, VIGI_POLL_MS);
+        };
+        img.onerror = () => {
+            if (!vigiLoopActive) return;
+            vigiPollTimer = setTimeout(pollFrame, 400); // กล้องยังไม่พร้อม ลองใหม่ช้าหน่อย
+        };
+        img.src = '/api/vigi-frame?t=' + Date.now();
     }
 
-    connectStream();
+    pollFrame();
 }
 
 function stopVigiPreview() {
     vigiLoopActive = false;
-    if (vigiRestartTimer) { clearTimeout(vigiRestartTimer); vigiRestartTimer = null; }
+    if (vigiPollTimer) { clearTimeout(vigiPollTimer); vigiPollTimer = null; }
     const vigiImg = document.getElementById('vigiImg');
     vigiImg.src = '';
     vigiImg.style.display = 'none';
@@ -975,8 +987,13 @@ async function captureOcr() {
             const url  = URL.createObjectURL(blob);
             const im   = new Image();
             await new Promise((ok, no) => { im.onload = ok; im.onerror = no; im.src = url; });
-            canvas.width  = im.naturalWidth  || 1280;
-            canvas.height = im.naturalHeight || 720;
+            // จำกัดด้านยาวสุดไม่เกิน 2000px ก่อนส่ง OCR → upload เล็กลง ประมวลผลเร็วขึ้น
+            // (ยังเหลือความละเอียดพอสำหรับบัตรที่โฟกัสชัด)
+            const MAX = 2000;
+            const sw = im.naturalWidth || 1280, sh = im.naturalHeight || 720;
+            const scale = Math.min(1, MAX / Math.max(sw, sh));
+            canvas.width  = Math.round(sw * scale);
+            canvas.height = Math.round(sh * scale);
             canvas.getContext('2d').drawImage(im, 0, 0, canvas.width, canvas.height);
             URL.revokeObjectURL(url);
         } catch (err) {
