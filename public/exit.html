@@ -256,43 +256,36 @@
             }
         }
 
-        // Preview แบบ snapshot polling — ดึงเฟรมล่าสุดทีละใบ ไม่ใช้ MJPEG stream
-        // แก้ดีเลย์สะสม + จอดำ: แต่ละรอบเป็น request อิสระ ได้เฟรมสดเสมอ
-        let vigiLoopActive = false;
-        let vigiPollTimer  = null;
-        const VIGI_POLL_MS = 120;
+        // Preview แบบ MJPEG stream (ดีเลย์ต้นต่ำ)
+        // แก้ "เปิดกล้องช้า/จอดำ": แสดงเฟรมล่าสุดจากแรมทันทีก่อน แล้วค่อยต่อ live stream
+        let vigiLoopActive  = false;
+        let vigiStreamTimer = null;
 
         function startVigiPreview() {
             video.style.display = 'none';
             canvas.classList.add('hidden');
             streamImg.classList.remove('hidden');
             vigiLoopActive = true;
+            streamImg.onerror = () => {
+                console.warn('VIGI stream error — กล้องอาจเต็มหรือต่อไม่ได้');
+            };
 
-            function pollFrame() {
-                if (!vigiLoopActive) return;
-                const img = new Image();
-                img.onload = () => {
-                    if (!vigiLoopActive) return;
-                    streamImg.src = img.src;        // สลับเมื่อโหลดเสร็จ → ไม่กระพริบ
-                    vigiPollTimer = setTimeout(pollFrame, VIGI_POLL_MS);
-                };
-                img.onerror = () => {
-                    if (!vigiLoopActive) return;
-                    vigiPollTimer = setTimeout(pollFrame, 400);
-                };
-                img.src = '/api/vigi-frame?t=' + Date.now();
-            }
+            // 1) เฟรมล่าสุดจากแรม — โผล่ทันที กันจอดำ
+            streamImg.src = '/api/vigi-frame?t=' + Date.now();
+            // 2) ต่อ live MJPEG stream หลังเฟรมแรกแสดงแล้ว
+            vigiStreamTimer = setTimeout(() => {
+                if (vigiLoopActive) streamImg.src = '/api/vigi-stream?t=' + Date.now();
+            }, 250);
 
-            pollFrame();
             showToast('กด "ถ่ายภาพ" เพื่อสแกนบัตร', 4500);
             captureButton.disabled = false;
         }
 
         function stopVigiStream() {
             vigiLoopActive = false;
-            if (vigiPollTimer) { clearTimeout(vigiPollTimer); vigiPollTimer = null; }
+            if (vigiStreamTimer) { clearTimeout(vigiStreamTimer); vigiStreamTimer = null; }
             if (streamImg) {
-                streamImg.removeAttribute('src');
+                streamImg.removeAttribute('src'); // ปิด connection ทันที กัน connection ค้าง
                 streamImg.classList.add('hidden');
             }
         }

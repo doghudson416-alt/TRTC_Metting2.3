@@ -926,13 +926,11 @@ async function ringHouse(houseNumber) {
 // ==========================================
 window.useVigiCamera = true; // เปลี่ยนเป็น false เพื่อกลับไปใช้ webcam
 
-let vigiLoopActive = false;
-let vigiPollTimer  = null;
+let vigiLoopActive  = false;
+let vigiStreamTimer = null;
 
-// Preview แบบ snapshot polling — ดึงเฟรมล่าสุดทีละใบ ไม่ใช้ MJPEG stream
-// แก้ดีเลย์สะสม + จอดำ: แต่ละรอบเป็น request อิสระ ได้เฟรมสดเสมอ ไม่มี buffer ค้าง
-const VIGI_POLL_MS = 120; // ~8fps ก็พอสำหรับเล็งบัตร
-
+// Preview แบบ MJPEG stream (ดีเลย์ต้นต่ำ)
+// แก้ "เปิดกล้องช้า/จอดำ": แสดงเฟรมล่าสุดจากแรมทันที 1 ใบก่อน แล้วค่อยต่อ live stream
 function startVigiPreview() {
     const video   = document.getElementById('ocrVideo');
     const canvas  = document.getElementById('ocrCanvas');
@@ -943,29 +941,19 @@ function startVigiPreview() {
     vigiImg.style.display = 'block';
     vigiLoopActive = true;
 
-    function pollFrame() {
-        if (!vigiLoopActive) return;
-        const img = new Image();
-        img.onload = () => {
-            if (!vigiLoopActive) return;
-            vigiImg.src = img.src;          // สลับเฉพาะเมื่อโหลดเสร็จ → ไม่กระพริบ
-            vigiPollTimer = setTimeout(pollFrame, VIGI_POLL_MS);
-        };
-        img.onerror = () => {
-            if (!vigiLoopActive) return;
-            vigiPollTimer = setTimeout(pollFrame, 400); // กล้องยังไม่พร้อม ลองใหม่ช้าหน่อย
-        };
-        img.src = '/api/vigi-frame?t=' + Date.now();
-    }
-
-    pollFrame();
+    // 1) เฟรมล่าสุดจากแรม — โผล่ทันที ไม่ต้องรอ stream connect (กันจอดำ)
+    vigiImg.src = '/api/vigi-frame?t=' + Date.now();
+    // 2) ต่อ live MJPEG stream หลังเฟรมแรกแสดงแล้ว
+    vigiStreamTimer = setTimeout(() => {
+        if (vigiLoopActive) vigiImg.src = '/api/vigi-stream?t=' + Date.now();
+    }, 250);
 }
 
 function stopVigiPreview() {
     vigiLoopActive = false;
-    if (vigiPollTimer) { clearTimeout(vigiPollTimer); vigiPollTimer = null; }
+    if (vigiStreamTimer) { clearTimeout(vigiStreamTimer); vigiStreamTimer = null; }
     const vigiImg = document.getElementById('vigiImg');
-    vigiImg.src = '';
+    vigiImg.src = '';                 // ปิด connection MJPEG ทันที กัน connection ค้างจน browser เต็ม
     vigiImg.style.display = 'none';
 }
 
