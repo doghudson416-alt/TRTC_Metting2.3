@@ -899,6 +899,8 @@ const VIGI_RTSP_BASE = process.env.VIGI_RTSP_URL || 'rtsp://admin:P@ssw0rd1@172.
 const VIGI_RTSP_SUB  = process.env.VIGI_RTSP_SUB_URL  || VIGI_RTSP_BASE.replace(/stream1(\b|$)/, 'stream2');
 // main stream (4MP) = snapshot คมชัดสำหรับ OCR → stream1
 const VIGI_RTSP_MAIN = process.env.VIGI_RTSP_MAIN_URL || VIGI_RTSP_BASE.replace(/stream2(\b|$)/, 'stream1');
+// transport ของ preview: udp = latency ต่ำกว่าบน LAN (ถ้าภาพแตก/หลุดบ่อย ตั้ง env เป็น tcp)
+const VIGI_TRANSPORT = process.env.VIGI_RTSP_TRANSPORT || 'udp';
 
 let latestFrame      = null;
 let vigiProcess      = null;
@@ -920,7 +922,7 @@ function startVigiStream() {
     if (vigiProcess) return;
 
     const args = [
-        '-rtsp_transport', 'tcp',
+        '-rtsp_transport', VIGI_TRANSPORT,  // udp = latency ต่ำกว่า tcp บน LAN
         '-flags', 'low_delay',
         '-fflags', 'nobuffer+discardcorrupt',
         '-analyzeduration', '0',
@@ -931,6 +933,7 @@ function startVigiStream() {
         '-q:v', '8',
         '-s', '640x360',
         '-f', 'mjpeg',
+        '-flush_packets', '1', // ดันเฟรมออกจาก ffmpeg ทันที ไม่ค้าง buffer → latency ต่ำลง
         'pipe:1'
     ];
 
