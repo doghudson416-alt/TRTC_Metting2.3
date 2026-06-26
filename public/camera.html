@@ -957,6 +957,50 @@ function stopVigiPreview() {
     vigiImg.style.display = 'none';
 }
 
+// ==========================================
+// VIGI → TRTC video track
+// ป้อมยามไม่มี webcam — ใช้ภาพกล้อง VIGI ส่งเข้า TRTC แทน
+// วาด MJPEG ลง canvas แล้ว captureStream() เป็น video track
+// ==========================================
+let vigiCallImg = null, vigiCallCanvas = null, vigiCallRAF = null, vigiCallTrack = null;
+
+function createVigiVideoTrack() {
+    const img = new Image();
+    img.src = '/api/vigi-stream?call=' + Date.now();
+    const canvas = document.createElement('canvas');
+    canvas.width = 640; canvas.height = 360;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height); // กันเฟรมแรกโปร่ง
+
+    function draw() {
+        if (img.naturalWidth) {
+            try { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); } catch(e) {}
+        }
+        vigiCallRAF = requestAnimationFrame(draw);
+    }
+    draw();
+
+    const stream = canvas.captureStream(15);
+    vigiCallImg = img; vigiCallCanvas = canvas;
+    vigiCallTrack = stream.getVideoTracks()[0];
+    return vigiCallTrack;
+}
+
+function stopVigiVideoTrack() {
+    if (vigiCallRAF) { cancelAnimationFrame(vigiCallRAF); vigiCallRAF = null; }
+    if (vigiCallTrack) { try { vigiCallTrack.stop(); } catch(e) {} vigiCallTrack = null; }
+    if (vigiCallImg) { vigiCallImg.src = ''; vigiCallImg = null; }
+    vigiCallCanvas = null;
+}
+
+// โชว์ภาพ VIGI ในพรีวิวหลัก (แทน webcam ที่ป้อมยามไม่มี)
+function showVigiMainPreview() {
+    const wrap = document.getElementById('localVideoWrap');
+    if (wrap) wrap.innerHTML = '<img src="/api/vigi-stream?main=' + Date.now() + '" style="width:100%;height:100%;object-fit:cover;">';
+    const ph = document.getElementById('camPlaceholder');
+    if (ph) ph.style.display = 'none';
+}
+
 
 // ถ่ายภาพและส่ง OCR
 async function captureOcr() {
@@ -1226,12 +1270,13 @@ async function enterRoom(startAt) {
         userSig
     });
 
-    // Camera: start video + audio (mic permission ได้ขอไว้ล่วงหน้าตอน preview แล้ว)
+    // Camera: ส่งภาพ VIGI เข้า TRTC (ป้อมยามไม่มี webcam) + audio
     try {
-        await trtc.startLocalVideo({ view: 'incallLocalVideo' });
+        const vigiTrack = createVigiVideoTrack();
+        await trtc.startLocalVideo({ view: 'incallLocalVideo', option: { videoTrack: vigiTrack } });
         document.getElementById('camPlaceholder').style.display = 'none';
     } catch(e) {
-        console.warn('No camera:', e.message);
+        console.warn('VIGI video publish failed:', e.message);
     }
     trtc.startLocalAudio().catch(e => console.warn('No mic:', e.message));
 
@@ -1291,18 +1336,14 @@ async function handleCallEnd(msg) {
     try { await trtc.stopLocalVideo(); } catch(e) {}
     try { await trtc.stopLocalAudio(); } catch(e) {}
     try { await trtc.exitRoom(); } catch(e) {}
+    stopVigiVideoTrack();   // ปิด canvas loop + track ของ VIGI
     trtc = TRTC.create();
 
     document.getElementById('incallOverlay').classList.remove('active');
     document.getElementById('callingOverlay').classList.remove('active');
 
-    // Restart camera preview
-    setTimeout(async () => {
-        try {
-            await trtc.startLocalVideo({ view: 'localVideoWrap' });
-            document.getElementById('camPlaceholder').style.display = 'none';
-        } catch(e) {}
-    }, 500);
+    // กลับมาโชว์ภาพ VIGI ในพรีวิวหลัก
+    showVigiMainPreview();
 
     resetAllBtns();
     currentRoom = null;
@@ -1416,22 +1457,17 @@ window.addEventListener('DOMContentLoaded', async () => {
     // โหลดรายการบ้านจาก API
     await loadHouses();
 
-    // ขอ camera + mic permission ล่วงหน้าพร้อมกันเลย — ไม่ให้ popup ขัดตอนโทร
+    // ขอเฉพาะ mic ล่วงหน้า (ป้อมยามไม่มี webcam — ถ้าขอ video ด้วยจะ fail ทั้งคู่ ทำให้ไม่ได้ mic)
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         stream.getTracks().forEach(t => t.stop());
-        console.log('🎤📷 Camera+Mic permission granted in advance');
+        console.log('🎤 Mic permission granted in advance');
     } catch(e) {
-        console.warn('Permission pre-request failed:', e.message);
+        console.warn('Mic permission pre-request failed:', e.message);
     }
 
-    try {
-        // Preview camera in background
-        await trtc.startLocalVideo({ view: 'localVideoWrap' });
-        document.getElementById('camPlaceholder').style.display = 'none';
-    } catch(e) {
-        console.warn('Camera not available for preview:', e.message);
-    }
+    // โชว์ภาพ VIGI ในพรีวิวหลัก (แทน webcam)
+    showVigiMainPreview();
 });
 </script>
 </body>
