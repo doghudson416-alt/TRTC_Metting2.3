@@ -899,30 +899,17 @@ const VIGI_RTSP_BASE = process.env.VIGI_RTSP_URL || 'rtsp://admin:P@ssw0rd1@172.
 const VIGI_RTSP_SUB  = process.env.VIGI_RTSP_SUB_URL  || VIGI_RTSP_BASE.replace(/stream1(\b|$)/, 'stream2');
 // main stream (4MP) = snapshot คมชัดสำหรับ OCR → stream1
 const VIGI_RTSP_MAIN = process.env.VIGI_RTSP_MAIN_URL || VIGI_RTSP_BASE.replace(/stream2(\b|$)/, 'stream1');
-// transport ของ preview (default tcp = ดีเลย์ต้นต่ำและเสถียรแบบเดิม)
-const VIGI_TRANSPORT = process.env.VIGI_RTSP_TRANSPORT || 'tcp';
 
 let latestFrame      = null;
 let vigiProcess      = null;
 let vigiRestartTimer = null;
-let vigiFrameCount   = 0;     // นับเฟรมสะสมจาก ffmpeg
-let vigiLastFrameAt  = 0;     // เวลา (ms) ที่ได้เฟรมล่าสุด
-let vigiPrevCount    = 0;
 const SOI = Buffer.from([0xFF, 0xD8]);
-
-// Heartbeat: รายงาน fps จริง + ความสดของเฟรมทุก 5 วิ → ดูได้ว่ากล้องส่งเฟรมทันไหม
-setInterval(() => {
-    const fps = (vigiFrameCount - vigiPrevCount) / 5;
-    vigiPrevCount = vigiFrameCount;
-    const ageMs = vigiLastFrameAt ? Date.now() - vigiLastFrameAt : -1;
-    console.log(`   📊 VIGI: ${fps.toFixed(1)} fps | เฟรมล่าสุดเมื่อ ${ageMs} ms ที่แล้ว | running=${!!vigiProcess}`);
-}, 5000);
 
 function startVigiStream() {
     if (vigiProcess) return;
 
     const args = [
-        '-rtsp_transport', VIGI_TRANSPORT,
+        '-rtsp_transport', 'tcp',
         '-flags', 'low_delay',
         '-fflags', 'nobuffer+discardcorrupt',
         '-analyzeduration', '0',
@@ -936,8 +923,8 @@ function startVigiStream() {
         'pipe:1'
     ];
 
-    console.log('📷 Starting VIGI ffmpeg stream... SUB =', VIGI_RTSP_SUB);
-    vigiProcess = spawn('ffmpeg', args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    console.log('📷 Starting VIGI ffmpeg stream...');
+    vigiProcess = spawn('ffmpeg', args, { stdio: ['ignore', 'pipe', 'ignore'] });
 
     let buf = Buffer.alloc(0);
     const EOI = Buffer.from([0xFF, 0xD9]);
@@ -950,19 +937,11 @@ function startVigiStream() {
             if (sIdx === -1) break;
             const eIdx = buf.indexOf(EOI, sIdx + 2);
             if (eIdx === -1) break;
-            latestFrame   = buf.slice(sIdx, eIdx + 2);
-            vigiFrameCount++;
-            vigiLastFrameAt = Date.now();
+            latestFrame = buf.slice(sIdx, eIdx + 2);
             start = eIdx + 2;
         }
         buf = buf.slice(start);
         if (buf.length > 2 * 1024 * 1024) buf = Buffer.alloc(0);
-    });
-
-    // log เฉพาะ error/warning ของ ffmpeg (ข้ามบรรทัด progress "frame=..." ที่ถี่เกินไป)
-    vigiProcess.stderr.on('data', (d) => {
-        const line = d.toString().trim();
-        if (line && !line.startsWith('frame=')) console.log('   [ffmpeg]', line.split('\n').pop());
     });
 
     vigiProcess.on('close', (code) => {
@@ -999,13 +978,9 @@ app.get('/api/vigi-snapshot', (req, res) => {
     snapInFlight = true;
     const args = [
         '-rtsp_transport', 'tcp',
-        '-fflags', 'nobuffer',      // ไม่สะสม buffer → คว้าเฟรมแรกเร็วขึ้น
-        '-flags', 'low_delay',
-        '-analyzeduration', '0',    // ไม่วิเคราะห์สตรีมนาน → ต่อแล้วคว้าเลย
-        '-probesize', '100000',
-        '-i', VIGI_RTSP_MAIN,       // ภาพคมจาก main stream
+        '-i', VIGI_RTSP_MAIN,   // ภาพคมจาก main stream
         '-frames:v', '1',
-        '-q:v', '2',                // คุณภาพสูงสำหรับ OCR
+        '-q:v', '2',            // คุณภาพสูงสำหรับ OCR
         '-f', 'image2',
         '-vcodec', 'mjpeg',
         'pipe:1'
@@ -1037,18 +1012,8 @@ app.get('/api/vigi-snapshot', (req, res) => {
     });
 });
 
-// Lightweight preview frame — คืนเฟรมล่าสุดในแรม (sub-stream) ทันที 1 ใบ
-// ใช้กับ snapshot polling ฝั่ง client → ไม่มี buffer สะสมแบบ MJPEG stream
-// แก้อาการ "ดีเลย์เพิ่มขึ้นเรื่อยๆ" และ "จอดำต้องรีเฟรช"
-app.get('/api/vigi-frame', (req, res) => {
-    if (!latestFrame) return res.status(503).end();
-    res.set({ 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-store', 'Content-Length': latestFrame.length });
-    res.send(latestFrame);
-});
-
 // MJPEG stream endpoint — browser แสดงผลผ่าน <img src> โดยตรง ไม่ต้องใช้ JS loop
 // latency ต่ำกว่า fetch loop มาก เพราะไม่มี HTTP overhead ต่อ frame
-// (คงไว้เผื่อ fallback — ปัจจุบันหน้าเว็บเปลี่ยนไปใช้ /api/vigi-frame polling แล้ว)
 app.get('/api/vigi-stream', (req, res) => {
     res.set({
         'Content-Type': 'multipart/x-mixed-replace; boundary=--mjpegframe',

@@ -927,10 +927,8 @@ async function ringHouse(houseNumber) {
 window.useVigiCamera = true; // เปลี่ยนเป็น false เพื่อกลับไปใช้ webcam
 
 let vigiLoopActive  = false;
-let vigiStreamTimer = null;
+let vigiRestartTimer = null;
 
-// Preview แบบ MJPEG stream (ดีเลย์ต้นต่ำ)
-// แก้ "เปิดกล้องช้า/จอดำ": แสดงเฟรมล่าสุดจากแรมทันที 1 ใบก่อน แล้วค่อยต่อ live stream
 function startVigiPreview() {
     const video   = document.getElementById('ocrVideo');
     const canvas  = document.getElementById('ocrCanvas');
@@ -941,19 +939,21 @@ function startVigiPreview() {
     vigiImg.style.display = 'block';
     vigiLoopActive = true;
 
-    // 1) เฟรมล่าสุดจากแรม — โผล่ทันที ไม่ต้องรอ stream connect (กันจอดำ)
-    vigiImg.src = '/api/vigi-frame?t=' + Date.now();
-    // 2) ต่อ live MJPEG stream หลังเฟรมแรกแสดงแล้ว
-    vigiStreamTimer = setTimeout(() => {
-        if (vigiLoopActive) vigiImg.src = '/api/vigi-stream?t=' + Date.now();
-    }, 250);
+    function connectStream() {
+        if (!vigiLoopActive) return;
+        vigiImg.src = '/api/vigi-stream?' + Date.now();
+        // restart ทุก 30 วินาที เพื่อ flush memory ที่ browser สะสมจาก MJPEG
+        vigiRestartTimer = setTimeout(connectStream, 30000);
+    }
+
+    connectStream();
 }
 
 function stopVigiPreview() {
     vigiLoopActive = false;
-    if (vigiStreamTimer) { clearTimeout(vigiStreamTimer); vigiStreamTimer = null; }
+    if (vigiRestartTimer) { clearTimeout(vigiRestartTimer); vigiRestartTimer = null; }
     const vigiImg = document.getElementById('vigiImg');
-    vigiImg.src = '';                 // ปิด connection MJPEG ทันที กัน connection ค้างจน browser เต็ม
+    vigiImg.src = '';
     vigiImg.style.display = 'none';
 }
 
@@ -975,13 +975,8 @@ async function captureOcr() {
             const url  = URL.createObjectURL(blob);
             const im   = new Image();
             await new Promise((ok, no) => { im.onload = ok; im.onerror = no; im.src = url; });
-            // จำกัดด้านยาวสุดไม่เกิน 2000px ก่อนส่ง OCR → upload เล็กลง ประมวลผลเร็วขึ้น
-            // (ยังเหลือความละเอียดพอสำหรับบัตรที่โฟกัสชัด)
-            const MAX = 2000;
-            const sw = im.naturalWidth || 1280, sh = im.naturalHeight || 720;
-            const scale = Math.min(1, MAX / Math.max(sw, sh));
-            canvas.width  = Math.round(sw * scale);
-            canvas.height = Math.round(sh * scale);
+            canvas.width  = im.naturalWidth  || 1280;
+            canvas.height = im.naturalHeight || 720;
             canvas.getContext('2d').drawImage(im, 0, 0, canvas.width, canvas.height);
             URL.revokeObjectURL(url);
         } catch (err) {

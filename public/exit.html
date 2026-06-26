@@ -256,36 +256,23 @@
             }
         }
 
-        // Preview แบบ MJPEG stream (ดีเลย์ต้นต่ำ)
-        // แก้ "เปิดกล้องช้า/จอดำ": แสดงเฟรมล่าสุดจากแรมทันทีก่อน แล้วค่อยต่อ live stream
-        let vigiLoopActive  = false;
-        let vigiStreamTimer = null;
-
         function startVigiPreview() {
             video.style.display = 'none';
             canvas.classList.add('hidden');
+            // cache-bust กัน browser ใช้ connection เก่าที่ค้าง
+            streamImg.src = '/api/vigi-stream?t=' + Date.now();
             streamImg.classList.remove('hidden');
-            vigiLoopActive = true;
             streamImg.onerror = () => {
                 console.warn('VIGI stream error — กล้องอาจเต็มหรือต่อไม่ได้');
+                showToast('เชื่อมต่อกล้องไม่ได้ ลองใหม่อีกครั้ง', 5000);
             };
-
-            // 1) เฟรมล่าสุดจากแรม — โผล่ทันที กันจอดำ
-            streamImg.src = '/api/vigi-frame?t=' + Date.now();
-            // 2) ต่อ live MJPEG stream หลังเฟรมแรกแสดงแล้ว
-            vigiStreamTimer = setTimeout(() => {
-                if (vigiLoopActive) streamImg.src = '/api/vigi-stream?t=' + Date.now();
-            }, 250);
-
             showToast('กด "ถ่ายภาพ" เพื่อสแกนบัตร', 4500);
             captureButton.disabled = false;
         }
 
         function stopVigiStream() {
-            vigiLoopActive = false;
-            if (vigiStreamTimer) { clearTimeout(vigiStreamTimer); vigiStreamTimer = null; }
             if (streamImg) {
-                streamImg.removeAttribute('src'); // ปิด connection ทันที กัน connection ค้าง
+                streamImg.removeAttribute('src'); // ปิด connection → server kill ffmpeg
                 streamImg.classList.add('hidden');
             }
         }
@@ -298,12 +285,9 @@
             const url  = URL.createObjectURL(blob);
             const im   = new Image();
             await new Promise((ok, no) => { im.onload = ok; im.onerror = no; im.src = url; });
-            // จำกัดด้านยาวสุดไม่เกิน 2000px ก่อนส่ง OCR → upload เล็กลง ประมวลผลเร็วขึ้น
-            const MAX = 2000;
-            const scale = Math.min(1, MAX / Math.max(im.width, im.height));
-            canvas.width  = Math.round(im.width * scale);
-            canvas.height = Math.round(im.height * scale);
-            canvas.getContext('2d').drawImage(im, 0, 0, canvas.width, canvas.height);
+            canvas.width  = im.width;
+            canvas.height = im.height;
+            canvas.getContext('2d').drawImage(im, 0, 0);
             URL.revokeObjectURL(url);
             canvas.classList.remove('hidden');
         }
