@@ -19,6 +19,27 @@ const ENV_PATH = path.join(__dirname, '.env');
 const PORT     = process.env.PORT || 3001;
 const URL_RE   = /https:\/\/[a-z0-9-]+\.trycloudflare\.com/;
 
+// หา cloudflared: กำหนดเองผ่าน env > ไฟล์ในโฟลเดอร์โปรเจค > ตำแหน่งติดตั้งทั่วไป > PATH
+// (กันปัญหา terminal ยังไม่รีเฟรช PATH หลังเพิ่งติดตั้ง / ติดตั้งคนละที่)
+//
+// ถ้าเครื่องไหน cloudflared อยู่ที่แปลกๆ ตั้ง env ก่อนรันได้เลย เช่น:
+//     set CLOUDFLARED_PATH=D:\tools\cloudflared.exe   (cmd)
+//     $env:CLOUDFLARED_PATH="D:\tools\cloudflared.exe" (PowerShell)
+function findCloudflared() {
+    const candidates = [
+        process.env.CLOUDFLARED_PATH,                       // กำหนดเอง
+        path.join(__dirname, 'cloudflared.exe'),            // วางไว้ในโฟลเดอร์โปรเจค
+        'C:\\Program Files (x86)\\cloudflared\\cloudflared.exe',
+        'C:\\Program Files\\cloudflared\\cloudflared.exe',
+        path.join(process.env.LOCALAPPDATA || '', 'Microsoft\\WinGet\\Links\\cloudflared.exe'),
+    ];
+    for (const c of candidates) {
+        if (c && fs.existsSync(c)) return c;
+    }
+    return 'cloudflared'; // สุดท้ายลองจาก PATH
+}
+const CLOUDFLARED = findCloudflared();
+
 let appliedUrl = null;
 
 function updateEnvAppUrl(url) {
@@ -37,7 +58,8 @@ function recreateApp() {
 }
 
 console.log(`🚀 เปิด Cloudflare Quick Tunnel → http://localhost:${PORT}`);
-const cf = spawn('cloudflared', ['tunnel', '--url', `http://localhost:${PORT}`]);
+console.log(`   ใช้ cloudflared: ${CLOUDFLARED}`);
+const cf = spawn(CLOUDFLARED, ['tunnel', '--url', `http://localhost:${PORT}`]);
 
 function onOutput(data) {
     const text = data.toString();
