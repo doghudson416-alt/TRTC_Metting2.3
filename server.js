@@ -779,6 +779,45 @@ io.on('connection', (socket) => {
         console.log(`🏠 Resident ${houseNumber} registered: ${socket.id}`);
     });
 
+    // ── VIGI audio → PCM stream (ส่งเสียงไมค์ในกล้อง VIGI เข้า TRTC ตอนวิดีโอคอล) ──
+    socket.on('start_vigi_audio', () => {
+        if (socket.vigiAudioProc) return;
+        const args = [
+            '-rtsp_transport', 'tcp',
+            '-fflags', 'nobuffer',
+            '-flags', 'low_delay',
+            '-i', VIGI_RTSP_SUB,
+            '-vn',              // เอาเฉพาะเสียง ทิ้งภาพ
+            '-ac', '1',         // mono
+            '-ar', '48000',     // ให้ตรงกับ AudioContext ฝั่ง browser
+            '-f', 'f32le',      // raw PCM float32
+            'pipe:1'
+        ];
+        const proc = spawn('ffmpeg', args, { stdio: ['ignore', 'pipe', 'ignore'] });
+        socket.vigiAudioProc = proc;
+        let pcmBuf = Buffer.alloc(0);
+        proc.stdout.on('data', (chunk) => {
+            // ส่งเป็นก้อนที่หาร 4 ลงตัว (1 sample = 4 bytes) กัน float ขาดครึ่ง
+            pcmBuf = Buffer.concat([pcmBuf, chunk]);
+            const usable = pcmBuf.length - (pcmBuf.length % 4);
+            if (usable > 0) {
+                socket.emit('vigi_audio_chunk', Buffer.from(pcmBuf.subarray(0, usable)));
+                pcmBuf = pcmBuf.subarray(usable);
+            }
+        });
+        proc.on('close', () => { if (socket.vigiAudioProc === proc) socket.vigiAudioProc = null; });
+        proc.on('error', () => { if (socket.vigiAudioProc === proc) socket.vigiAudioProc = null; });
+        console.log(`🔊 VIGI audio started for ${socket.id}`);
+    });
+
+    socket.on('stop_vigi_audio', () => {
+        if (socket.vigiAudioProc) {
+            try { socket.vigiAudioProc.kill('SIGKILL'); } catch(e) {}
+            socket.vigiAudioProc = null;
+            console.log(`🔇 VIGI audio stopped for ${socket.id}`);
+        }
+    });
+
     socket.on('ring', async ({ houseNumber, visitorInfo }) => {
         const numericRoomId = generateNumericRoomId();
         const roomCode = generateRoomCode();
@@ -876,6 +915,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
+        if (socket.vigiAudioProc) { try { socket.vigiAudioProc.kill('SIGKILL'); } catch(e) {} socket.vigiAudioProc = null; }
         for (const [house, sid] of Object.entries(residentSockets)) {
             if (sid === socket.id) { delete residentSockets[house]; console.log(`🏠 Resident ${house} disconnected`); }
         }

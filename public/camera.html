@@ -1001,6 +1001,72 @@ function showVigiMainPreview() {
     if (ph) ph.style.display = 'none';
 }
 
+// ==========================================
+// VIGI audio → TRTC audio track
+// server ส่ง PCM (f32le 48kHz mono) มาทาง socket.io → AudioWorklet → MediaStream track
+// ==========================================
+let vigiAudioCtx = null, vigiAudioNode = null, vigiAudioDest = null, vigiAudioTrack = null, vigiAudioActive = false;
+
+async function createVigiAudioTrack() {
+    vigiAudioCtx = new AudioContext({ sampleRate: 48000 });
+    if (vigiAudioCtx.state === 'suspended') { try { await vigiAudioCtx.resume(); } catch(e) {} }
+
+    // AudioWorklet processor (โหลดจาก blob ไม่ต้องมีไฟล์แยก)
+    const workletCode = `
+    class PCMPlayer extends AudioWorkletProcessor {
+        constructor() {
+            super();
+            this.buffers = []; this.cur = null; this.pos = 0;
+            this.port.onmessage = (e) => {
+                this.buffers.push(e.data);
+                // กัน latency สะสม: ถ้า backlog เกิน ~0.5s ทิ้งของเก่า
+                let total = 0; for (const b of this.buffers) total += b.length;
+                while (total > 24000 && this.buffers.length > 1) total -= this.buffers.shift().length;
+            };
+        }
+        process(inputs, outputs) {
+            const out = outputs[0][0];
+            for (let i = 0; i < out.length; i++) {
+                if (!this.cur || this.pos >= this.cur.length) { this.cur = this.buffers.shift() || null; this.pos = 0; }
+                out[i] = this.cur ? this.cur[this.pos++] : 0;
+            }
+            return true;
+        }
+    }
+    registerProcessor('pcm-player', PCMPlayer);
+    `;
+    const url = URL.createObjectURL(new Blob([workletCode], { type: 'application/javascript' }));
+    await vigiAudioCtx.audioWorklet.addModule(url);
+    URL.revokeObjectURL(url);
+
+    vigiAudioNode = new AudioWorkletNode(vigiAudioCtx, 'pcm-player');
+    vigiAudioDest = vigiAudioCtx.createMediaStreamDestination();
+    vigiAudioNode.connect(vigiAudioDest);
+
+    vigiAudioActive = true;
+    socket.on('vigi_audio_chunk', onVigiAudioChunk);
+    socket.emit('start_vigi_audio');
+
+    vigiAudioTrack = vigiAudioDest.stream.getAudioTracks()[0];
+    return vigiAudioTrack;
+}
+
+function onVigiAudioChunk(chunk) {
+    if (!vigiAudioActive || !vigiAudioNode) return;
+    const f32 = new Float32Array(chunk); // socket.io ส่ง binary → ArrayBuffer
+    vigiAudioNode.port.postMessage(f32, [f32.buffer]);
+}
+
+function stopVigiAudioTrack() {
+    vigiAudioActive = false;
+    try { socket.emit('stop_vigi_audio'); } catch(e) {}
+    socket.off('vigi_audio_chunk', onVigiAudioChunk);
+    if (vigiAudioTrack) { try { vigiAudioTrack.stop(); } catch(e) {} vigiAudioTrack = null; }
+    if (vigiAudioNode) { try { vigiAudioNode.disconnect(); } catch(e) {} vigiAudioNode = null; }
+    vigiAudioDest = null;
+    if (vigiAudioCtx) { try { vigiAudioCtx.close(); } catch(e) {} vigiAudioCtx = null; }
+}
+
 
 // ถ่ายภาพและส่ง OCR
 async function captureOcr() {
@@ -1270,7 +1336,7 @@ async function enterRoom(startAt) {
         userSig
     });
 
-    // Camera: ส่งภาพ VIGI เข้า TRTC (ป้อมยามไม่มี webcam) + audio
+    // Camera: ส่งภาพ VIGI เข้า TRTC (ป้อมยามไม่มี webcam)
     try {
         const vigiTrack = createVigiVideoTrack();
         await trtc.startLocalVideo({ view: 'incallLocalVideo', option: { videoTrack: vigiTrack } });
@@ -1278,7 +1344,13 @@ async function enterRoom(startAt) {
     } catch(e) {
         console.warn('VIGI video publish failed:', e.message);
     }
-    trtc.startLocalAudio().catch(e => console.warn('No mic:', e.message));
+    // เสียง: ส่งเสียงไมค์ในกล้อง VIGI เข้า TRTC (แทนไมค์เครื่อง)
+    try {
+        const vigiAudioTrack = await createVigiAudioTrack();
+        await trtc.startLocalAudio({ option: { audioTrack: vigiAudioTrack } });
+    } catch(e) {
+        console.warn('VIGI audio publish failed:', e.message);
+    }
 
     document.getElementById('incallRoomCode').textContent = 'ROOM: ' + roomCode;
     // timer ถูกเริ่มก่อน enterRoom แล้วใน call_accepted handler
@@ -1337,6 +1409,7 @@ async function handleCallEnd(msg) {
     try { await trtc.stopLocalAudio(); } catch(e) {}
     try { await trtc.exitRoom(); } catch(e) {}
     stopVigiVideoTrack();   // ปิด canvas loop + track ของ VIGI
+    stopVigiAudioTrack();   // ปิด PCM stream + audio track ของ VIGI
     trtc = TRTC.create();
 
     document.getElementById('incallOverlay').classList.remove('active');
